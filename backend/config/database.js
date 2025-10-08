@@ -4,9 +4,9 @@ oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 oracledb.autoCommit = true;
 
 const dbConfig = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  connectString: `${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_SID}`
+  user: process.env.DB_USER || 'system',
+  password: process.env.DB_PASSWORD || '123',
+  connectString: `${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 1521}/${process.env.DB_SID || 'xe'}`
 };
 
 let connection;
@@ -44,16 +44,25 @@ const initDatabase = async () => {
 };
 
 const getConnection = async () => {
-  if (!connection) {
-    connection = await oracledb.getConnection(dbConfig);
+  try {
+    if (!connection) {
+      connection = await oracledb.getConnection(dbConfig);
+    }
+    return connection;
+  } catch (error) {
+    console.error('Error getting database connection:', error);
+    throw error;
   }
-  return connection;
 };
 
 const closeConnection = async () => {
   if (connection) {
-    await connection.close();
-    console.log('Database connection closed');
+    try {
+      await connection.close();
+      console.log('Database connection closed');
+    } catch (error) {
+      console.error('Error closing connection:', error);
+    }
   }
 };
 

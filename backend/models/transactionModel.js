@@ -1,4 +1,5 @@
 const { getConnection } = require('../config/database');
+const oracledb = require('oracledb');
 
 class Transaction {
   static async create(transactionData) {
@@ -7,18 +8,17 @@ class Transaction {
     
     const result = await connection.execute(
       `INSERT INTO transactions (amount, description, type, category) 
-       VALUES (:amount, :description, :type, :category) 
-       RETURNING id INTO :id`,
-      {
-        amount,
-        description,
-        type,
-        category,
-        id: { type: oracledb.NUMBER, dir: oracledb.BIND_OUT }
-      }
+       VALUES (:amount, :description, :type, :category)`,
+      { amount, description, type, category },
+      { autoCommit: true }
     );
     
-    return result.outBinds.id[0];
+    // For Oracle, we need to get the last inserted ID differently
+    const idResult = await connection.execute(
+      'SELECT transactions_seq.CURRVAL AS id FROM DUAL'
+    );
+    
+    return idResult.rows[0].ID;
   }
 
   static async getAll() {
@@ -32,7 +32,7 @@ class Transaction {
     
     return result.rows.map(row => ({
       id: row.ID,
-      amount: row.AMOUNT,
+      amount: parseFloat(row.AMOUNT),
       desc: row.DESCRIPTION,
       type: row.TYPE,
       category: row.CATEGORY,
@@ -57,7 +57,7 @@ class Transaction {
     const row = result.rows[0];
     return {
       id: row.ID,
-      amount: row.AMOUNT,
+      amount: parseFloat(row.AMOUNT),
       desc: row.DESCRIPTION,
       type: row.TYPE,
       category: row.CATEGORY,
@@ -69,7 +69,8 @@ class Transaction {
     const connection = await getConnection();
     const result = await connection.execute(
       'DELETE FROM transactions WHERE id = :id',
-      [id]
+      [id],
+      { autoCommit: true }
     );
     
     return result.rowsAffected > 0;
@@ -83,7 +84,8 @@ class Transaction {
       `UPDATE transactions 
        SET amount = :amount, description = :description, type = :type, category = :category 
        WHERE id = :id`,
-      { amount, description, type, category, id }
+      { amount, description, type, category, id },
+      { autoCommit: true }
     );
     
     return result.rowsAffected > 0;
