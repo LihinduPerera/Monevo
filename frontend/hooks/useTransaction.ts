@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
-import { addTransaction, deleteTransaction, getTransactions, Transaction } from "../services/database";
+import { 
+    addTransaction, 
+    deleteTransaction, 
+    getTransactions, 
+    Transaction, 
+    addTransactionWithSync, 
+    syncPendingTransactions 
+} from "../services/database";
+import { Alert } from "react-native";
 
 export const useTransactions = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
+    const [backendAvailable, setBackendAvailable] = useState(false);
 
     const loadTransactions = async () => {
         try {
@@ -18,7 +27,14 @@ export const useTransactions = () => {
 
     const addNewTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         try {
-            await addTransaction(transaction);
+            await addTransactionWithSync(transaction, () => {
+                // This callback runs when backend sync is successful
+                Alert.alert(
+                    "Success", 
+                    "Transaction saved locally and synchronized with cloud!",
+                    [{ text: "OK" }]
+                );
+            });
             await loadTransactions();
         } catch (error) {
             console.error('Error adding transaction:', error);
@@ -36,8 +52,44 @@ export const useTransactions = () => {
         }
     };
 
+    const syncAllPending = async () => {
+        try {
+            const syncedCount = await syncPendingTransactions();
+            if (syncedCount > 0) {
+                Alert.alert(
+                    "Sync Complete", 
+                    `Successfully synced ${syncedCount} transactions with cloud!`,
+                    [{ text: "OK" }]
+                );
+            } else {
+                Alert.alert(
+                    "Sync Complete", 
+                    "All transactions are already synced with cloud!",
+                    [{ text: "OK" }]
+                );
+            }
+            await loadTransactions();
+            return syncedCount;
+        } catch (error) {
+            console.error('Error syncing transactions:', error);
+            Alert.alert("Sync Failed", "Failed to sync transactions with cloud");
+            return 0;
+        }
+    };
+
+    const checkBackendStatus = async () => {
+        try {
+            // We'll assume backend is available for now
+            // You can implement actual health check later
+            setBackendAvailable(true);
+        } catch (error) {
+            setBackendAvailable(false);
+        }
+    };
+
     useEffect(() => {
         loadTransactions();
+        checkBackendStatus();
     }, []);
 
     return {
@@ -46,5 +98,7 @@ export const useTransactions = () => {
         addTransaction: addNewTransaction,
         deleteTransaction: removeTransaction,
         refreshTransactions: loadTransactions,
+        syncPendingTransactions: syncAllPending,
+        backendAvailable,
     };
-}
+};

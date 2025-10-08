@@ -47,6 +47,12 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
             <Text className="text-gray-500 text-sm">
               {transaction.category} • {formatDate(transaction.date)}
             </Text>
+            {transaction.synced && (
+              <Text className="text-green-500 text-xs mt-1">✓ Synced with cloud</Text>
+            )}
+            {!transaction.synced && (
+              <Text className="text-yellow-500 text-xs mt-1">⚠ Local only</Text>
+            )}
           </View>
           
           <View className="items-end">

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "coinflow-DBMS2",
-    "slug": "coinflow-DBMS2",
+    "name": "coinflow",
+    "slug": "coinflow",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

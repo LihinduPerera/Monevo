@@ -4,9 +4,10 @@ import { Transaction } from '../services/database';
 
 interface TransactionFormProps {
   onSubmit: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  backendAvailable?: boolean;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvailable = true }) => {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('expense');
@@ -24,9 +25,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit }) => {
       return;
     }
 
+    if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      Alert.alert('Error', 'Please enter a valid amount');
+      return;
+    }
+
     const transactionData: Omit<Transaction, 'id'> = {
       amount: parseFloat(amount),
-      desc:description,
+      desc: description,
       type,
       category,
       date: new Date().toISOString(),
@@ -38,7 +44,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit }) => {
       setAmount('');
       setDescription('');
       setCategory('');
-      Alert.alert('Success', 'Transaction added successfully');
+      // Success alert is now handled in the hook with backend sync
     } catch (error) {
       Alert.alert('Error', 'Failed to add transaction');
     } finally {
@@ -50,10 +56,27 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit }) => {
     <ScrollView className="bg-white rounded-lg p-4">
       <Text className="text-lg font-bold mb-4">Add New Transaction</Text>
 
+      {/* Backend Status Indicator */}
+      {backendAvailable && (
+        <View className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <Text className="text-blue-800 text-sm">
+            💡 Transactions will be saved locally and synchronized with cloud storage.
+          </Text>
+        </View>
+      )}
+
+      {!backendAvailable && (
+        <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+          <Text className="text-yellow-800 text-sm">
+            ⚠️ Cloud storage is unavailable. Transactions will be saved locally only.
+          </Text>
+        </View>
+      )}
+
       {/* Type Selection */}
       <View className="flex-row mb-4">
         <TouchableOpacity
-          className={`flex-1 py-2 rounded-l-lg ${
+          className={`flex-1 py-3 rounded-l-lg ${
             type === 'expense' ? 'bg-red-500' : 'bg-gray-300'
           }`}
           onPress={() => setType('expense')}
@@ -61,7 +84,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit }) => {
           <Text className="text-center text-white font-semibold">Expense</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className={`flex-1 py-2 rounded-r-lg ${
+          className={`flex-1 py-3 rounded-r-lg ${
             type === 'income' ? 'bg-green-500' : 'bg-gray-300'
           }`}
           onPress={() => setType('income')}
@@ -107,13 +130,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit }) => {
 
       {/* Submit Button */}
       <TouchableOpacity
-        className={`bg-blue-500 rounded-lg p-3 ${
+        className={`bg-blue-500 rounded-lg p-4 ${
           loading ? 'opacity-50' : ''
         }`}
         onPress={handleSubmit}
         disabled={loading}
       >
-        <Text className="text-white text-center font-semibold">
+        <Text className="text-white text-center font-semibold text-lg">
           {loading ? 'Adding...' : 'Add Transaction'}
         </Text>
       </TouchableOpacity>
