@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { Transaction } from '../service/database';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Transaction } from '../services/database';
 import { formatCurrency, formatDate } from '../utils/helpers';
 
 interface TransactionListProps {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { addTransaction, deleteTransaction, getTransactions, Transaction } from "../service/database"
+import { addTransaction, deleteTransaction, getTransactions, Transaction } from "../services/database";
 
 export const useTransactions = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
