@@ -16,11 +16,23 @@ const initDatabase = async () => {
     connection = await oracledb.getConnection(dbConfig);
     console.log('Connected to Oracle Database');
     
-    // Create transactions table if not exists
+    // Create sequence first
+    await connection.execute(`
+      BEGIN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE transactions_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
+      EXCEPTION
+        WHEN OTHERS THEN
+          IF SQLCODE != -955 THEN
+            RAISE;
+          END IF;
+      END;
+    `);
+
+    // Create transactions table without identity column
     await connection.execute(`
       BEGIN
         EXECUTE IMMEDIATE 'CREATE TABLE transactions (
-          id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+          id NUMBER PRIMARY KEY,
           amount NUMBER NOT NULL,
           description VARCHAR2(500) NOT NULL,
           type VARCHAR2(10) NOT NULL,

@@ -8,8 +8,8 @@ export interface Transaction {
     type: "income" | "expense";
     category: string;
     date: string;
-    synced?: boolean; // Add sync status
-    backend_id?: number; // Backend transaction ID
+    synced?: boolean;
+    backend_id?: number;
 }
 
 const db = SQLite.openDatabaseSync('finance.db');
