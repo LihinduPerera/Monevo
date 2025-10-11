@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, ScrollView, RefreshControl, TouchableOpacity, Text } from 'react-native';
-import { useTransactions } from '../../hooks/useTransaction';
-import TransactionForm from '../../components/TransactionForm';
-import TransactionList from '../../components/TransactionList';
+import { useTransactions } from '@/hooks/useTransaction';
+import TransactionForm from '@/components/TransactionForm';
+import TransactionList from '@/components/TransactionList';
+import { useAuth } from '@/contexts/AuthContext';
+import { router } from 'expo-router';
 
-const TransactionScreen: React.FC = () => {
+export default function TransactionScreen() {
   const { 
     transactions, 
     loading, 
@@ -14,10 +16,35 @@ const TransactionScreen: React.FC = () => {
     syncPendingTransactions,
     backendAvailable 
   } = useTransactions();
+  
+  const { isAuthenticated, appReady } = useAuth();
+
+  useEffect(() => {
+    if (appReady && !isAuthenticated) {
+      router.replace('/(auth)/login');
+    }
+  }, [isAuthenticated, appReady]);
 
   const handleSync = async () => {
     await syncPendingTransactions();
   };
+
+  // Show loading while checking authentication
+  if (!appReady) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center">
+        <Text className="text-lg text-gray-600">Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <View className="flex-1 bg-gray-50 justify-center items-center">
+        <Text className="text-lg text-gray-600">Redirecting to login...</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -52,6 +79,4 @@ const TransactionScreen: React.FC = () => {
       </ScrollView>
     </View>
   );
-};
-
-export default TransactionScreen;
+}

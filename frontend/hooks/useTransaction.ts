@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Alert } from "react-native";
 import { 
     addTransaction, 
     deleteTransaction, 
@@ -7,19 +8,33 @@ import {
     addTransactionWithSync, 
     syncPendingTransactions 
 } from "../services/database";
-import { Alert } from "react-native";
+import { backendService } from "../services/backend";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useTransactions = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [backendAvailable, setBackendAvailable] = useState(false);
+    const { isAuthenticated } = useAuth();
 
     const loadTransactions = async () => {
         try {
-            const data = await getTransactions();
-            setTransactions(data);
+            const localData = await getTransactions();
+            
+            if (isAuthenticated && backendAvailable) {
+                try {
+                    const backendData = await backendService.getTransactions();
+                    setTransactions(localData);
+                } catch (error) {
+                    console.error('Error loading from backend, using local data:', error);
+                    setTransactions(localData);
+                }
+            } else {
+                setTransactions(localData);
+            }
         } catch (error) {
             console.error('Error loading transactions:', error);
+            setTransactions([]);
         } finally {
             setLoading(false);
         }
@@ -27,14 +42,22 @@ export const useTransactions = () => {
 
     const addNewTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         try {
-            await addTransactionWithSync(transaction, () => {
-                // This callback runs when backend sync is successful
+            if (isAuthenticated && backendAvailable) {
+                await addTransactionWithSync(transaction, () => {
+                    Alert.alert(
+                        "Success", 
+                        "Transaction saved locally and synchronized with cloud!",
+                        [{ text: "OK" }]
+                    );
+                });
+            } else {
+                await addTransaction(transaction);
                 Alert.alert(
                     "Success", 
-                    "Transaction saved locally and synchronized with cloud!",
+                    "Transaction saved locally. Sync when online.",
                     [{ text: "OK" }]
                 );
-            });
+            }
             await loadTransactions();
         } catch (error) {
             console.error('Error adding transaction:', error);
@@ -79,9 +102,8 @@ export const useTransactions = () => {
 
     const checkBackendStatus = async () => {
         try {
-            // We'll assume backend is available for now
-            // You can implement actual health check later
-            setBackendAvailable(true);
+            const isAvailable = await backendService.healthCheck();
+            setBackendAvailable(isAvailable && isAuthenticated);
         } catch (error) {
             setBackendAvailable(false);
         }
@@ -90,7 +112,7 @@ export const useTransactions = () => {
     useEffect(() => {
         loadTransactions();
         checkBackendStatus();
-    }, []);
+    }, [isAuthenticated]);
 
     return {
         transactions,

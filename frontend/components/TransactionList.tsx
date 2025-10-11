@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Transaction } from '../services/database';
 import { formatCurrency, formatDate } from '../utils/helpers';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -9,6 +10,8 @@ interface TransactionListProps {
 }
 
 const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelete }) => {
+  const { isAuthenticated } = useAuth();
+
   const handleDelete = (transaction: Transaction) => {
     Alert.alert(
       'Delete Transaction',
@@ -47,11 +50,14 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
             <Text className="text-gray-500 text-sm">
               {transaction.category} • {formatDate(transaction.date)}
             </Text>
-            {transaction.synced && (
+            {isAuthenticated && transaction.synced && (
               <Text className="text-green-500 text-xs mt-1">✓ Synced with cloud</Text>
             )}
-            {!transaction.synced && (
-              <Text className="text-yellow-500 text-xs mt-1">⚠ Local only</Text>
+            {isAuthenticated && !transaction.synced && (
+              <Text className="text-yellow-500 text-xs mt-1">⚠ Local only - Sync pending</Text>
+            )}
+            {!isAuthenticated && (
+              <Text className="text-orange-500 text-xs mt-1">🔐 Login to sync</Text>
             )}
           </View>
           

@@ -1,7 +1,32 @@
-import { Tabs } from "expo-router";
+import { Tabs, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { TouchableOpacity, Text, Alert } from "react-native";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function TabLayout() {
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            // Use setTimeout to ensure navigation is ready
+            setTimeout(() => {
+              router.replace('/(auth)/login');
+            }, 100);
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <Tabs
       screenOptions={{
@@ -14,6 +39,11 @@ export default function TabLayout() {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
+        headerRight: () => (
+          <TouchableOpacity onPress={handleLogout} className="mr-4">
+            <Text className="text-white font-semibold">Logout</Text>
+          </TouchableOpacity>
+        ),
       }}
     >
       <Tabs.Screen
@@ -31,6 +61,15 @@ export default function TabLayout() {
           title: 'Transactions',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="card" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
           ),
         }}
       />

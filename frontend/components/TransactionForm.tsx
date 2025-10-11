@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Transaction } from '../services/database';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TransactionFormProps {
   onSubmit: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
@@ -13,6 +14,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const categories = {
     income: ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'],
@@ -44,7 +46,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
       setAmount('');
       setDescription('');
       setCategory('');
-      // Success alert is now handled in the hook with backend sync
     } catch (error) {
       Alert.alert('Error', 'Failed to add transaction');
     } finally {
@@ -56,8 +57,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
     <ScrollView className="bg-white rounded-lg p-4">
       <Text className="text-lg font-bold mb-4">Add New Transaction</Text>
 
-      {/* Backend Status Indicator */}
-      {backendAvailable && (
+      {isAuthenticated && backendAvailable && (
         <View className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
           <Text className="text-blue-800 text-sm">
             💡 Transactions will be saved locally and synchronized with cloud storage.
@@ -65,7 +65,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
         </View>
       )}
 
-      {!backendAvailable && (
+      {isAuthenticated && !backendAvailable && (
         <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
           <Text className="text-yellow-800 text-sm">
             ⚠️ Cloud storage is unavailable. Transactions will be saved locally only.
@@ -73,7 +73,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
         </View>
       )}
 
-      {/* Type Selection */}
+      {!isAuthenticated && (
+        <View className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+          <Text className="text-orange-800 text-sm">
+            🔐 Please login to sync with cloud storage. Transactions will be saved locally only.
+          </Text>
+        </View>
+      )}
+
       <View className="flex-row mb-4">
         <TouchableOpacity
           className={`flex-1 py-3 rounded-l-lg ${
@@ -93,7 +100,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
         </TouchableOpacity>
       </View>
 
-      {/* Amount */}
       <TextInput
         className="border border-gray-300 rounded-lg p-3 mb-4"
         placeholder="Amount"
@@ -102,7 +108,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
         keyboardType="numeric"
       />
 
-      {/* Description */}
       <TextInput
         className="border border-gray-300 rounded-lg p-3 mb-4"
         placeholder="Description"
@@ -110,7 +115,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
         onChangeText={setDescription}
       />
 
-      {/* Category */}
       <Text className="font-semibold mb-2">Category</Text>
       <View className="flex-row flex-wrap mb-4">
         {categories[type].map((cat) => (
@@ -128,7 +132,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
         ))}
       </View>
 
-      {/* Submit Button */}
       <TouchableOpacity
         className={`bg-blue-500 rounded-lg p-4 ${
           loading ? 'opacity-50' : ''
