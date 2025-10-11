@@ -6,9 +6,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface SignInFormProps {
   onClose: () => void;
+  onSwitchToRegister: () => void;
 }
 
-export default function SignInForm({ onClose }: SignInFormProps) {
+export default function SignInForm({ onClose, onSwitchToRegister }: SignInFormProps) {
   const [idOrEmail, setIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,7 @@ export default function SignInForm({ onClose }: SignInFormProps) {
 
     setLoading(true);
     try {
-      await login(idOrEmail, password); // Assuming backend handles ID or email
+      await login(idOrEmail, password);
       Alert.alert('Success', 'Login successful!');
       router.replace('/(tabs)');
     } catch (error: any) {

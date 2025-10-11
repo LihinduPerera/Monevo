@@ -5,16 +5,19 @@ import { Marquee } from '@animatereactnative/marquee';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import SignInForm from '@/components/SignInForm';
+import RegisterForm from '@/components/RegisterForm';
 
 const { width, height } = Dimensions.get('window');
 
+type AuthMode = 'signin' | 'register';
+
 export default function LandingScreen() {
-  const [isSignInDialogShown, setIsSignInDialogShown] = useState(false);
+  const [authDialogShown, setAuthDialogShown] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>('signin');
 
   const contentTop = useSharedValue(0);
   const dialogTranslateY = useSharedValue(-height);
 
-  // Helpers
   const randomColor = () =>
     `#${Math.floor(Math.random() * 16777215)
       .toString(16)
@@ -22,7 +25,6 @@ export default function LandingScreen() {
   const randomChar = () => String.fromCharCode(33 + Math.floor(Math.random() * 94));
   const randomFontSize = () => 40 + Math.floor(Math.random() * 200);
 
-  // Background marquee settings
   const ROW_HEIGHT = 120;
   const NUM_ROWS = Math.ceil(height / ROW_HEIGHT) + 1;
 
@@ -38,15 +40,24 @@ export default function LandingScreen() {
   }, []);
 
   const handleButtonPress = () => {
-    contentTop.value = withTiming(-50, { duration: 240 });
+    setAuthMode('signin');
+    contentTop.value = withTiming(-60, { duration: 240 });
     dialogTranslateY.value = withTiming(0, { duration: 300 });
-    setIsSignInDialogShown(true);
+    setAuthDialogShown(true);
+  };
+
+  const handleSwitchToRegister = () => {
+    setAuthMode('register');
+  };
+
+  const handleSwitchToSignIn = () => {
+    setAuthMode('signin');
   };
 
   const closeDialog = () => {
     contentTop.value = withTiming(0, { duration: 240 });
     dialogTranslateY.value = withTiming(-height, { duration: 300 });
-    setTimeout(() => setIsSignInDialogShown(false), 300);
+    setTimeout(() => setAuthDialogShown(false), 300);
   };
 
   const animatedContentStyle = useAnimatedStyle(() => ({
@@ -57,8 +68,21 @@ export default function LandingScreen() {
     transform: [{ translateY: dialogTranslateY.value }],
   }));
 
+  const getDialogHeight = () => {
+    return authMode === 'signin' ? 560 : 690;
+  };
+
+  const getDialogTitle = () => {
+    return authMode === 'signin' ? 'Welcome Back' : 'Create Account';
+  };
+
+  const getDialogDescription = () => {
+    return authMode === 'signin'
+      ? 'Sign in to access your income and expense reports, budgets, and insights.'
+      : 'Create your account to start managing your finances smarter.';
+  };
+
   return (
-    // bg-[#0A0F1C]
     <View className='bg-[#101820]' style={{ flex: 1 }}>
       {/* Background image */}
       <View
@@ -128,15 +152,14 @@ export default function LandingScreen() {
                 Your Money, Simplified
               </Text>
               <View style={{ height: 20 }} />
-              {/* color: '#4b5563' */}
-              <Text className='color-slate-400' style={{ fontSize: 16,  }}>
+              <Text className='color-slate-400' style={{ fontSize: 16 }}>
                 Track income, monitor expenses, and stay in control of your finances — all in one smart dashboard.
               </Text>
             </View>
 
             <View style={{ flex: 2 }} />
 
-            {/* Sign In button */}
+            {/* Get Started button */}
             <TouchableOpacity
               style={{ backgroundColor: '#4a30ca', borderRadius: 10, padding: 16 }}
               onPress={handleButtonPress}
@@ -156,8 +179,8 @@ export default function LandingScreen() {
         </SafeAreaView>
       </Animated.View>
 
-      {/* Sign In Dialog */}
-      {isSignInDialogShown && (
+      {/* Auth Dialog */}
+      {authDialogShown && (
         <Animated.View
           style={[
             {
@@ -170,46 +193,66 @@ export default function LandingScreen() {
             animatedDialogStyle,
           ]}
         >
+          {/* Add extra blur layer for contrast */}
+          <BlurView intensity={90} tint="prominent" style={{ position: 'absolute', inset: 0 }} pointerEvents="none" />
+
           <View
             style={{
-              height: 560,
+              height: getDialogHeight(),
               marginHorizontal: 16,
               paddingVertical: 32,
               paddingHorizontal: 24,
-              // backgroundColor: '#fff',
               backgroundColor: '#E5E7EB',
               borderRadius: 40,
               overflow: 'hidden',
             }}
           >
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
               <Text style={{ fontSize: 34, fontWeight: '700', textAlign: 'center', fontFamily: 'Poppins' }}>
-                Welcome Back
+                {getDialogTitle()}
               </Text>
               <View style={{ paddingVertical: 16 }}>
                 <Text style={{ textAlign: 'center', color: '#6b7280' }}>
-                  Sign in to access your income and expense reports, budgets, and insights.
+                  {getDialogDescription()}
                 </Text>
               </View>
 
-              <SignInForm onClose={closeDialog} />
+              {authMode === 'signin' ? (
+                <SignInForm onClose={closeDialog} onSwitchToRegister={handleSwitchToRegister} />
+              ) : (
+                <RegisterForm onClose={closeDialog} onSwitchToSignIn={handleSwitchToSignIn} />
+              )}
 
               <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 16 }}>
                 <View style={{ flex: 1, height: 1, backgroundColor: '#d1d5db' }} />
-                <Text style={{ paddingHorizontal: 10, color: '#4b5563' }}>New Here?</Text>
+                <Text style={{ paddingHorizontal: 10, color: '#4b5563' }}>
+                  {authMode === 'signin' ? 'New Here?' : 'Already have an account?'}
+                </Text>
                 <View style={{ flex: 1, height: 1, backgroundColor: '#d1d5db' }} />
               </View>
 
               <View style={{ paddingTop: 10, paddingHorizontal: 8 }}>
                 <Text style={{ textAlign: 'center', fontSize: 13, color: '#6b7280', fontFamily: 'Poppins' }}>
-                  Don't have an account yet? Create one to start managing your finances smarter.
+                  {authMode === 'signin'
+                    ? "Don't have an account yet? Create one to start managing your finances smarter."
+                    : "Already have an account? Sign in to access your financial dashboard."}
                 </Text>
               </View>
+
+              {/* Switch mode button */}
+              <TouchableOpacity
+                onPress={authMode === 'signin' ? handleSwitchToRegister : handleSwitchToSignIn}
+                style={{ marginTop: 16 }}
+              >
+                <Text style={{ textAlign: 'center', color: '#4a30ca', fontWeight: '600', fontSize: 16 }}>
+                  {authMode === 'signin' ? 'Create an Account' : 'Sign In to Existing Account'}
+                </Text>
+              </TouchableOpacity>
             </ScrollView>
           </View>
 
           {/* Close button */}
-          <View style={{ position: 'absolute', alignSelf: 'center', bottom: height / 2 - 280 - 16 }}>
+          <View style={{ position: 'absolute', alignSelf: 'center', bottom: height / 2 - getDialogHeight() / 2 - 16 }}>
             <TouchableOpacity
               style={{
                 width: 40,
