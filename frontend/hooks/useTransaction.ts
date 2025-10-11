@@ -77,13 +77,14 @@ export const useTransactions = () => {
                     `Successfully synced ${syncedCount} transactions with cloud!`,
                     [{ text: "OK" }]
                 );
-            } else {
-                Alert.alert(
-                    "Sync Complete", 
-                    "All transactions are already synced with cloud!",
-                    [{ text: "OK" }]
-                );
-            }
+            } 
+            // else {
+            //     Alert.alert(
+            //         "Sync Complete", 
+            //         "All transactions are already synced with cloud!",
+            //         [{ text: "OK" }]
+            //     );
+            // }
             await loadTransactions();
             return syncedCount;
         } catch (error) {

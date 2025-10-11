@@ -103,7 +103,7 @@ export default function LandingScreen() {
         style={{ width: width * 1.7 }}
       >
         <Image
-          source={require('../../assets/backgrounds/spline.png')}
+          source={require('../assets/backgrounds/spline.png')}
           className="w-full"
           resizeMode="contain"
           style={{ opacity: 0.18 }}
