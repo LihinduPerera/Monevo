@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, Image, Dimensions, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Marquee } from '@animatereactnative/marquee';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import SignInForm from '@/components/SignInForm';
 import RegisterForm from '@/components/RegisterForm';
@@ -17,6 +17,7 @@ export default function LandingScreen() {
 
   const contentTop = useSharedValue(0);
   const dialogTranslateY = useSharedValue(-height);
+  const dialogOpacity = useSharedValue(0);
 
   const randomColor = () =>
     `#${Math.floor(Math.random() * 16777215)
@@ -41,9 +42,15 @@ export default function LandingScreen() {
 
   const handleButtonPress = () => {
     setAuthMode('signin');
-    contentTop.value = withTiming(-60, { duration: 240 });
-    dialogTranslateY.value = withTiming(0, { duration: 300 });
+    // Mount the dialog first with opacity 0
     setAuthDialogShown(true);
+    
+    // Use a small delay to ensure the component is mounted before animating
+    setTimeout(() => {
+      contentTop.value = withTiming(-60, { duration: 240 });
+      dialogOpacity.value = withTiming(1, { duration: 200 });
+      dialogTranslateY.value = withTiming(0, { duration: 300 });
+    }, 16); // One frame delay
   };
 
   const handleSwitchToRegister = () => {
@@ -55,9 +62,14 @@ export default function LandingScreen() {
   };
 
   const closeDialog = () => {
+    dialogOpacity.value = withTiming(0, { duration: 200 });
     contentTop.value = withTiming(0, { duration: 240 });
-    dialogTranslateY.value = withTiming(-height, { duration: 300 });
-    setTimeout(() => setAuthDialogShown(false), 300);
+    dialogTranslateY.value = withTiming(-height, { 
+      duration: 300,
+    }, () => {
+      // Unmount after animation completes
+      runOnJS(setAuthDialogShown)(false);
+    });
   };
 
   const animatedContentStyle = useAnimatedStyle(() => ({
@@ -66,10 +78,11 @@ export default function LandingScreen() {
 
   const animatedDialogStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: dialogTranslateY.value }],
+    opacity: dialogOpacity.value,
   }));
 
   const getDialogHeight = () => {
-    return authMode === 'signin' ? 560 : 690;
+    return authMode === 'signin' ? 560 : 640;
   };
 
   const getDialogTitle = () => {
@@ -195,7 +208,7 @@ export default function LandingScreen() {
         >
           {/* Add extra blur layer for contrast */}
           <BlurView intensity={90} tint="prominent" style={{ position: 'absolute', inset: 0 }} pointerEvents="none" />
-
+          
           <View
             style={{
               height: getDialogHeight(),
