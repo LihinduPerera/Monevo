@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, Dimensions, SafeAreaView, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, Image, Dimensions, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Marquee } from '@animatereactnative/marquee';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -14,7 +14,6 @@ export default function LandingScreen() {
   const contentTop = useSharedValue(0);
   const dialogTranslateY = useSharedValue(-height);
 
-  // Generate random characters for background marquee animations
   const generateRandomChars = (length: number) => {
     return Array.from({ length }, () => String.fromCharCode(33 + Math.floor(Math.random() * 94))).join(' ');
   };
@@ -43,51 +42,69 @@ export default function LandingScreen() {
   }));
 
   return (
-    <View style={styles.container}>
-      {/* Background image
-      <View style={[styles.backgroundImageContainer, { width: width * 1.7 }]}>
+    <View className="flex-1">
+      {/* Background image */}
+      <View 
+        className="absolute left-[100px] bottom-[200px]"
+        style={{ width: width * 1.7 }}
+      >
         <Image
-        //   source={require('../../assets/backgrounds/spline.png')} // Assume asset exists; adjust path if needed?
-          style={styles.backgroundImage}
+          source={require('../../assets/backgrounds/spline.png')}
+          className="w-full"
           resizeMode="contain"
         />
-      </View> */}
+      </View>
 
-      {/* Marquee for random character animations in background (layer 1) */}
-      <Marquee speed={0.5} spacing={20} style={StyleSheet.absoluteFillObject}>
-        <Text style={styles.marqueeText}>{randomChars1}</Text>
-      </Marquee>
+      {/* Marquee background layers */}
+      <View className="absolute inset-0">
+        <Marquee speed={0.5} spacing={20}>
+          <Text className="text-[100px] opacity-20 text-gray-500">{randomChars1}</Text>
+        </Marquee>
+      </View>
+      <View className="absolute inset-0">
+        <Marquee speed={0.8} spacing={20} reverse={true}>
+          <Text className="text-[80px] opacity-20 text-[#87A4E3]">{randomChars2}</Text>
+        </Marquee>
+      </View>
 
-      {/* Marquee for random character animations in background (layer 2, reverse for unique look) */}
-      <Marquee speed={0.8} spacing={20} reverse={true} style={StyleSheet.absoluteFillObject}>
-        <Text style={[styles.marqueeText, { fontSize: 80, color: '#87A4E3' }]}>{randomChars2}</Text>
-      </Marquee>
-
-      {/* Blur effect over background */}
-      <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
+      <BlurView intensity={30} tint="light" className="absolute inset-0" />
 
       {/* Main content */}
-      <Animated.View style={[styles.mainContent, animatedContentStyle]}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <View style={styles.contentPadding}>
-            <View style={{ flex: 1 }} />
+      <Animated.View 
+        className="absolute left-0"
+        style={[{ height: height, width: width }, animatedContentStyle]}
+      >
+        <SafeAreaView className="flex-1">
+          <View className="px-8 flex-1">
+            <View className="flex-1" />
+            
             {/* Title section */}
-            <View style={styles.titleSection}>
-              <Text style={styles.titleText}>Connected & Organized</Text>
-              <View style={{ height: 20 }} />
-              <Text style={styles.descriptionText}>
-                Join live sessions, share notes, and watch past recordings — all in one place. Simple, fast, and built for your class.
+            <View className="w-[280px]">
+              <Text className="text-[40px] font-bold leading-[48px]" style={{ fontFamily: 'Poppins-Bold' }}>
+                Your Money, Simplified
+              </Text>
+              <View className="h-5" />
+              <Text className="text-base text-gray-800">
+                Track income, monitor expenses, and stay in control of your finances — all in one smart dashboard.
               </Text>
             </View>
-            <View style={{ flex: 2 }} />
+
+            <View className="flex-[2]" />
+
             {/* Sign In button */}
-            <TouchableOpacity style={styles.signInButton} onPress={handleButtonPress}>
-              <Text style={styles.buttonText}>Sign In</Text>
+            <TouchableOpacity 
+              className="bg-[#4a30ca] rounded-[10px] p-4"
+              onPress={handleButtonPress}
+            >
+              <Text className="text-white text-center text-base font-semibold">
+                Get Started
+              </Text>
             </TouchableOpacity>
+
             {/* Footer text */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>
-                No more missed updates or scattered resources — everything you need is right here.
+            <View className="py-6">
+              <Text className="text-sm text-gray-500 text-center" style={{ fontFamily: 'Poppins' }}>
+                Take charge of your spending habits and reach your financial goals effortlessly.
               </Text>
             </View>
           </View>
@@ -96,29 +113,46 @@ export default function LandingScreen() {
 
       {/* Sign In Dialog */}
       {isSignInDialogShown && (
-        <Animated.View style={[styles.dialogOverlay, animatedDialogStyle]}>
-          <View style={styles.dialogContainer}>
+        <Animated.View 
+          className="absolute inset-0 justify-center items-center bg-transparent"
+          style={animatedDialogStyle}
+        >
+          <View className="h-[560px] mx-4 py-8 px-6 bg-white rounded-[40px] overflow-hidden">
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-              <Text style={styles.dialogTitle}>Sign In</Text>
-              <View style={styles.dialogDescriptionContainer}>
-                <Text style={styles.dialogDescription}>Sign in to stay connected with your classes and resources</Text>
+              <Text className="text-[34px] font-bold text-center" style={{ fontFamily: 'Poppins' }}>
+                Welcome Back
+              </Text>
+              <View className="py-4">
+                <Text className="text-center text-gray-500">
+                  Sign in to access your income and expense reports, budgets, and insights.
+                </Text>
               </View>
+
               <SignInForm onClose={closeDialog} />
-              <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <Text style={styles.dividerText}>Don't Have An Account?</Text>
-                <View style={styles.divider} />
+
+              <View className="flex-row items-center my-4">
+                <View className="flex-1 h-[1px] bg-gray-300" />
+                <Text className="px-2.5 text-gray-600">New Here?</Text>
+                <View className="flex-1 h-[1px] bg-gray-300" />
               </View>
-              <View style={styles.noteContainer}>
-                <Text style={styles.noteText}>
-                  Need an account? Please contact your teacher to receive your login details.
+
+              <View className="pt-2.5 px-2">
+                <Text className="text-center text-sm text-gray-500" style={{ fontFamily: 'Poppins' }}>
+                  Don't have an account yet? Create one to start managing your finances smarter.
                 </Text>
               </View>
             </ScrollView>
           </View>
+
           {/* Close button */}
-          <View style={styles.closeButtonContainer}>
-            <TouchableOpacity style={styles.closeButton} onPress={closeDialog}>
+          <View 
+            className="absolute self-center"
+            style={{ bottom: height / 2 - 280 - 16 }}
+          >
+            <TouchableOpacity 
+              className="w-8 h-8 rounded-full bg-white justify-center items-center"
+              onPress={closeDialog}
+            >
               <Ionicons name="close" size={20} color="black" />
             </TouchableOpacity>
           </View>
@@ -127,133 +161,3 @@ export default function LandingScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  backgroundImageContainer: {
-    position: 'absolute',
-    left: 100,
-    bottom: 200,
-  },
-  backgroundImage: {
-    width: '100%',
-  },
-  marqueeText: {
-    fontSize: 100,
-    opacity: 0.2,
-    color: 'gray',
-  },
-  mainContent: {
-    position: 'absolute',
-    left: 0,
-    height: height,
-    width: width,
-  },
-  contentPadding: {
-    paddingHorizontal: 32,
-    flex: 1,
-  },
-  titleSection: {
-    width: 260,
-  },
-  titleText: {
-    fontSize: 40,
-    fontFamily: 'Poppins-Bold', // Assume font loaded; replace with actual font family if needed
-    fontWeight: '800',
-    lineHeight: 40 * 1.2,
-  },
-  descriptionText: {
-    fontSize: 16, // Approximate
-  },
-  signInButton: {
-    backgroundColor: '#57A4E3', // FromARGB(255, 87, 164, 227)
-    borderRadius: 10,
-    padding: 16,
-  },
-  buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  footer: {
-    paddingVertical: 24,
-  },
-  footerText: {
-    fontSize: 14,
-    fontFamily: 'Poppins', // Assume font loaded
-    color: 'gray',
-    textAlign: 'center',
-  },
-  dialogOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-  },
-  dialogContainer: {
-    height: 560,
-    marginHorizontal: 16,
-    paddingVertical: 32,
-    paddingHorizontal: 24,
-    backgroundColor: 'white',
-    borderRadius: 40,
-    overflow: 'hidden',
-  },
-  dialogTitle: {
-    fontSize: 34,
-    fontFamily: 'Poppins', // Assume font loaded
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  dialogDescriptionContainer: {
-    paddingVertical: 16,
-  },
-  dialogDescription: {
-    textAlign: 'center',
-    color: 'gray',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'lightgray',
-  },
-  dividerText: {
-    paddingHorizontal: 10,
-    color: 'darkgray',
-  },
-  noteContainer: {
-    paddingTop: 10,
-    paddingHorizontal: 8,
-  },
-  noteText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: 'gray',
-    fontFamily: 'Poppins', // Assume font loaded
-  },
-  closeButtonContainer: {
-    position: 'absolute',
-    bottom: height / 2 - 280 - 16, // Approximate centering below dialog
-    alignSelf: 'center',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
