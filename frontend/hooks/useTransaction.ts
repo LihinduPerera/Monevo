@@ -6,7 +6,8 @@ import {
     getTransactions, 
     Transaction, 
     addTransactionWithSync, 
-    syncPendingTransactions 
+    syncPendingTransactions,
+    clearUserTransactions 
 } from "../services/database";
 import { backendService } from "../services/backend";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,18 +21,7 @@ export const useTransactions = () => {
     const loadTransactions = async () => {
         try {
             const localData = await getTransactions();
-            
-            if (isAuthenticated && backendAvailable) {
-                try {
-                    const backendData = await backendService.getTransactions();
-                    setTransactions(localData);
-                } catch (error) {
-                    console.error('Error loading from backend, using local data:', error);
-                    setTransactions(localData);
-                }
-            } else {
-                setTransactions(localData);
-            }
+            setTransactions(localData);
         } catch (error) {
             console.error('Error loading transactions:', error);
             setTransactions([]);
@@ -61,6 +51,7 @@ export const useTransactions = () => {
             await loadTransactions();
         } catch (error) {
             console.error('Error adding transaction:', error);
+            Alert.alert('Error', 'Failed to add transaction');
             throw error;
         }
     };
@@ -69,8 +60,10 @@ export const useTransactions = () => {
         try {
             await deleteTransaction(id);
             await loadTransactions();
+            Alert.alert('Success', 'Transaction deleted successfully!');
         } catch (error) {
             console.error('Error deleting transaction:', error);
+            Alert.alert('Error', 'Failed to delete transaction');
             throw error;
         }
     };
@@ -109,6 +102,17 @@ export const useTransactions = () => {
         }
     };
 
+    // For development: clear transactions
+    const clearTransactions = async () => {
+        try {
+            await clearUserTransactions();
+            await loadTransactions();
+            Alert.alert('Success', 'All transactions cleared');
+        } catch (error) {
+            console.error('Error clearing transactions:', error);
+        }
+    };
+
     useEffect(() => {
         loadTransactions();
         checkBackendStatus();
@@ -122,5 +126,6 @@ export const useTransactions = () => {
         refreshTransactions: loadTransactions,
         syncPendingTransactions: syncAllPending,
         backendAvailable,
+        clearTransactions, // For development only
     };
 };

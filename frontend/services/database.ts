@@ -17,34 +17,79 @@ export interface Transaction {
 const db = SQLite.openDatabaseSync('finance.db');
 
 export const initDatabase = () => {
-    db.execSync(`
-    CREATE TABLE IF NOT EXISTS transactions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      amount REAL NOT NULL,
-      desc TEXT NOT NULL,
-      type TEXT NOT NULL,
-      category TEXT NOT NULL,
-      date TEXT NOT NULL,
-      synced BOOLEAN DEFAULT 0,
-      backend_id INTEGER,
-      user_id INTEGER
-    );
-  `);
+    try {
+        // First, check if the transactions table exists and has the user_id column
+        const tableInfo = db.getAllSync(`
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='transactions'
+        `);
+        
+        if (tableInfo.length === 0) {
+            // Table doesn't exist, create it with all columns
+            db.execSync(`
+                CREATE TABLE transactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    amount REAL NOT NULL,
+                    desc TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    date TEXT NOT NULL,
+                    synced BOOLEAN DEFAULT 0,
+                    backend_id INTEGER,
+                    user_id INTEGER
+                );
+            `);
+            console.log('Created transactions table with user_id column');
+        } else {
+            // Table exists, check if user_id column exists
+            try {
+                // This will throw an error if user_id column doesn't exist
+                db.getAllSync('SELECT user_id FROM transactions LIMIT 1');
+                console.log('user_id column already exists');
+            } catch (error) {
+                // user_id column doesn't exist, add it
+                console.log('Adding user_id column to transactions table');
+                db.execSync('ALTER TABLE transactions ADD COLUMN user_id INTEGER');
+            }
+        }
+    } catch (error) {
+        console.error('Error initializing database:', error);
+        // If anything fails, try to recreate the table
+        try {
+            db.execSync('DROP TABLE IF EXISTS transactions');
+            db.execSync(`
+                CREATE TABLE transactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    amount REAL NOT NULL,
+                    desc TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    date TEXT NOT NULL,
+                    synced BOOLEAN DEFAULT 0,
+                    backend_id INTEGER,
+                    user_id INTEGER
+                );
+            `);
+            console.log('Recreated transactions table with user_id column');
+        } catch (recreateError) {
+            console.error('Failed to recreate table:', recreateError);
+        }
+    }
 };
 
 // Get current user ID from AsyncStorage
 const getCurrentUserId = async (): Promise<number | null> => {
-  try {
-    const userData = await AsyncStorage.getItem('user_data');
-    if (userData) {
-      const user = JSON.parse(userData);
-      return user.id;
+    try {
+        const userData = await AsyncStorage.getItem('user_data');
+        if (userData) {
+            const user = JSON.parse(userData);
+            return user.id;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting current user ID:', error);
+        return null;
     }
-    return null;
-  } catch (error) {
-    console.error('Error getting current user ID:', error);
-    return null;
-  }
 };
 
 // Add transaction to SQLite (offline first)
@@ -109,14 +154,22 @@ export const addTransactionWithSync = async (
 export const getTransactions = async (): Promise<Transaction[]> => {
     const userId = await getCurrentUserId();
     
-    if (userId) {
-        const result = db.getAllSync(
-            'SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC', 
-            [userId]
-        );
-        return Promise.resolve(result as Transaction[]);
-    } else {
-        return Promise.resolve([]);
+    try {
+        if (userId) {
+            // Get transactions for current user only
+            const result = db.getAllSync(
+                'SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC', 
+                [userId]
+            );
+            return result as Transaction[];
+        } else {
+            // If no user is logged in, return empty array
+            return [];
+        }
+    } catch (error) {
+        console.error('Error getting transactions:', error);
+        // If there's an error (like missing user_id column), return empty array
+        return [];
     }
 }
 
@@ -140,7 +193,6 @@ export const deleteTransaction = async (id: number): Promise<void> => {
         }
         
         db.runSync('DELETE FROM transactions WHERE id = ? AND user_id = ?', [id, userId]);
-        return Promise.resolve();
     } catch (error) {
         console.error('Error deleting transaction:', error);
         throw error;
@@ -186,5 +238,18 @@ export const syncPendingTransactions = async (): Promise<number> => {
     } catch (error) {
         console.error('Error syncing pending transactions:', error);
         return 0;
+    }
+}
+
+// Clear all transactions for current user (useful for testing)
+export const clearUserTransactions = async (): Promise<void> => {
+    const userId = await getCurrentUserId();
+    if (userId) {
+        try {
+            db.runSync('DELETE FROM transactions WHERE user_id = ?', [userId]);
+            console.log('Cleared transactions for user:', userId);
+        } catch (error) {
+            console.error('Error clearing transactions:', error);
+        }
     }
 }
