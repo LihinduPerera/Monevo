@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SignInFormProps {
   onClose: () => void;
+  onSwitchToRegister: () => void;
 }
 
-export default function SignInForm({ onClose }: SignInFormProps) {
+export default function SignInForm({ onClose, onSwitchToRegister }: SignInFormProps) {
   const [idOrEmail, setIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,7 @@ export default function SignInForm({ onClose }: SignInFormProps) {
 
     setLoading(true);
     try {
-      await login(idOrEmail, password); // Assuming backend handles ID or email
+      await login(idOrEmail, password);
       Alert.alert('Success', 'Login successful!');
       router.replace('/(tabs)');
     } catch (error: any) {
@@ -37,11 +38,11 @@ export default function SignInForm({ onClose }: SignInFormProps) {
   };
 
   return (
-    <View style={styles.formContainer}>
-      <Text style={styles.label}>ID or Email</Text>
-      <View style={styles.inputContainer}>
+    <View className="my-4">
+      <Text className="text-black font-medium mb-2">ID or Email</Text>
+      <View className="mb-4">
         <TextInput
-          style={styles.input}
+          className="border border-gray-400 rounded-[25px] p-4 bg-gray-50"
           placeholder="Enter ID or Email"
           value={idOrEmail}
           onChangeText={setIdOrEmail}
@@ -50,10 +51,10 @@ export default function SignInForm({ onClose }: SignInFormProps) {
         />
       </View>
 
-      <Text style={styles.label}>Password</Text>
-      <View style={styles.inputContainer}>
+      <Text className="text-black font-medium mb-2">Password</Text>
+      <View className="mb-4">
         <TextInput
-          style={styles.input}
+          className="border border-gray-400 rounded-[25px] p-4 bg-gray-50"
           placeholder="Enter your password"
           value={password}
           onChangeText={setPassword}
@@ -62,7 +63,9 @@ export default function SignInForm({ onClose }: SignInFormProps) {
       </View>
 
       <TouchableOpacity
-        style={[styles.submitButton, loading && styles.disabledButton]}
+        className={`min-h-14 rounded-[25px] flex-row items-center justify-center gap-2 ${
+          loading ? 'bg-blue-400 opacity-50' : 'bg-blue-500'
+        }`}
         onPress={handleLogin}
         disabled={loading}
       >
@@ -70,7 +73,7 @@ export default function SignInForm({ onClose }: SignInFormProps) {
           <ActivityIndicator color="white" size="small" />
         ) : (
           <>
-            <Text style={styles.submitText}>Sign In</Text>
+            <Text className="text-white text-base font-semibold">Sign In</Text>
             <Ionicons name="arrow-forward" size={20} color="white" />
           </>
         )}
@@ -78,41 +81,3 @@ export default function SignInForm({ onClose }: SignInFormProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  formContainer: {
-    marginVertical: 16,
-  },
-  label: {
-    color: 'black',
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 25,
-    padding: 16,
-    backgroundColor: '#f9f9f9',
-  },
-  submitButton: {
-    backgroundColor: '#57A4E3', // FromARGB(255, 87, 164, 227)
-    minHeight: 56,
-    borderRadius: 25,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  submitText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
