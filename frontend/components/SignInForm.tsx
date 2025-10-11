@@ -28,8 +28,8 @@ export default function SignInForm({ onClose, onSwitchToRegister }: SignInFormPr
     setLoading(true);
     try {
       await login(idOrEmail, password);
-      Alert.alert('Success', 'Login successful!');
-      router.replace('/(tabs)');
+      // Alert.alert('Success', 'Login successful!');
+      router.replace('/(tabs)/home');
     } catch (error: any) {
       Alert.alert('Login Failed', error.message || 'Failed to login');
     } finally {
