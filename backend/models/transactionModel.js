@@ -3,7 +3,7 @@ const { getConnection } = require('../config/database');
 class Transaction {
   static async create(transactionData) {
     const connection = await getConnection();
-    const { amount, description, type, category } = transactionData;
+    const { amount, description, type, category, user_id } = transactionData;
     
     try {
       // Get next sequence value
@@ -12,16 +12,17 @@ class Transaction {
       );
       const nextId = seqResult.rows[0].ID;
 
-      // Insert with explicit ID from sequence
+      // Insert with explicit ID from sequence and user_id
       await connection.execute(
-        `INSERT INTO transactions (id, amount, description, type, category) 
-         VALUES (:id, :amount, :description, :type, :category)`,
+        `INSERT INTO transactions (id, amount, description, type, category, user_id) 
+         VALUES (:id, :amount, :description, :type, :category, :user_id)`,
         {
           id: nextId,
           amount: amount,
           description: description,
           type: type,
-          category: category
+          category: category,
+          user_id: user_id
         },
         { autoCommit: true }
       );
@@ -33,14 +34,16 @@ class Transaction {
     }
   }
 
-  static async getAll() {
+  static async getAll(userId) {
     const connection = await getConnection();
     try {
       const result = await connection.execute(
         `SELECT id, amount, description, type, category, 
                 TO_CHAR(date_created, 'YYYY-MM-DD"T"HH24:MI:SS.FF3') as date 
          FROM transactions 
-         ORDER BY date_created DESC`
+         WHERE user_id = :user_id
+         ORDER BY date_created DESC`,
+        [userId]
       );
       
       return result.rows.map(row => ({
@@ -57,15 +60,15 @@ class Transaction {
     }
   }
 
-  static async getById(id) {
+  static async getById(id, userId) {
     const connection = await getConnection();
     try {
       const result = await connection.execute(
         `SELECT id, amount, description, type, category, 
                 TO_CHAR(date_created, 'YYYY-MM-DD"T"HH24:MI:SS.FF3') as date 
          FROM transactions 
-         WHERE id = :id`,
-        [id]
+         WHERE id = :id AND user_id = :user_id`,
+        [id, userId]
       );
       
       if (result.rows.length === 0) {
@@ -87,12 +90,12 @@ class Transaction {
     }
   }
 
-  static async delete(id) {
+  static async delete(id, userId) {
     const connection = await getConnection();
     try {
       const result = await connection.execute(
-        'DELETE FROM transactions WHERE id = :id',
-        [id],
+        'DELETE FROM transactions WHERE id = :id AND user_id = :user_id',
+        [id, userId],
         { autoCommit: true }
       );
       
@@ -103,7 +106,7 @@ class Transaction {
     }
   }
 
-  static async update(id, transactionData) {
+  static async update(id, transactionData, userId) {
     const connection = await getConnection();
     const { amount, description, type, category } = transactionData;
     
@@ -111,13 +114,14 @@ class Transaction {
       const result = await connection.execute(
         `UPDATE transactions 
          SET amount = :amount, description = :description, type = :type, category = :category 
-         WHERE id = :id`,
+         WHERE id = :id AND user_id = :user_id`,
         { 
           amount: amount, 
           description: description, 
           type: type, 
           category: category, 
-          id: id 
+          id: id,
+          user_id: userId
         },
         { autoCommit: true }
       );

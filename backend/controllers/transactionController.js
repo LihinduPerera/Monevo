@@ -1,12 +1,13 @@
 const Transaction = require('../models/transactionModel');
 
 const transactionController = {
-  // Create new transaction
+  
   createTransaction: async (req, res) => {
     try {
       const { amount, desc, type, category, date } = req.body;
+      const userId = req.user.id;
       
-      // Validate required fields
+      
       if (!amount || !desc || !type || !category) {
         return res.status(400).json({
           success: false,
@@ -14,7 +15,7 @@ const transactionController = {
         });
       }
       
-      // Validate type
+      
       if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({
           success: false,
@@ -26,7 +27,8 @@ const transactionController = {
         amount: parseFloat(amount),
         description: desc,
         type,
-        category
+        category,
+        user_id: userId
       });
       
       res.status(201).json({
@@ -44,10 +46,11 @@ const transactionController = {
     }
   },
 
-  // Get all transactions
+  
   getTransactions: async (req, res) => {
     try {
-      const transactions = await Transaction.getAll();
+      const userId = req.user.id;
+      const transactions = await Transaction.getAll(userId);
       
       res.json({
         success: true,
@@ -63,11 +66,12 @@ const transactionController = {
     }
   },
 
-  // Get transaction by ID
+  
   getTransactionById: async (req, res) => {
     try {
       const { id } = req.params;
-      const transaction = await Transaction.getById(parseInt(id));
+      const userId = req.user.id;
+      const transaction = await Transaction.getById(parseInt(id), userId);
       
       if (!transaction) {
         return res.status(404).json({
@@ -90,11 +94,12 @@ const transactionController = {
     }
   },
 
-  // Delete transaction
+  
   deleteTransaction: async (req, res) => {
     try {
       const { id } = req.params;
-      const deleted = await Transaction.delete(parseInt(id));
+      const userId = req.user.id;
+      const deleted = await Transaction.delete(parseInt(id), userId);
       
       if (!deleted) {
         return res.status(404).json({
@@ -117,13 +122,14 @@ const transactionController = {
     }
   },
 
-  // Update transaction
+  
   updateTransaction: async (req, res) => {
     try {
       const { id } = req.params;
       const { amount, desc, type, category } = req.body;
+      const userId = req.user.id;
       
-      // Validate required fields
+      
       if (!amount || !desc || !type || !category) {
         return res.status(400).json({
           success: false,
@@ -131,7 +137,7 @@ const transactionController = {
         });
       }
       
-      // Validate type
+      
       if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({
           success: false,
@@ -144,7 +150,7 @@ const transactionController = {
         description: desc,
         type,
         category
-      });
+      }, userId);
       
       if (!updated) {
         return res.status(404).json({
