@@ -8,7 +8,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (appReady && !isAuthenticated) {
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/landing');
     }
   }, [isAuthenticated, appReady]);
 

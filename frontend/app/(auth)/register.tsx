@@ -26,7 +26,7 @@ export default function RegisterScreen() {
     try {
       await register(name, email, password, dateOfBirth);
       Alert.alert('Success', 'Registration successful! Please login.');
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/landing');
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message || 'Failed to register');
     } finally {
@@ -113,7 +113,7 @@ export default function RegisterScreen() {
 
             <View className="flex-row justify-center mt-4">
               <Text className="text-gray-600">Already have an account? </Text>
-              <Link href="/(auth)/login" asChild>
+              <Link href="/(auth)/landing" asChild>
                 <TouchableOpacity>
                   <Text className="text-blue-500 font-semibold">Sign In</Text>
                 </TouchableOpacity>

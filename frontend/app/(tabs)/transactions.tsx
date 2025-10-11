@@ -21,7 +21,7 @@ export default function TransactionScreen() {
 
   useEffect(() => {
     if (appReady && !isAuthenticated) {
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/landing');
     }
   }, [isAuthenticated, appReady]);
 

@@ -4,6 +4,7 @@ import { initDatabase } from "@/services/database";
 import './global.css';
 import { useEffect, useState } from "react";
 import { View, Text, Alert } from "react-native";
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   const [appIsReady, setAppIsReady] = useState(false);
@@ -12,7 +13,6 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Initialize database with error handling
         await initDatabase();
       } catch (e: any) {
         console.error('Database initialization error:', e);
@@ -38,11 +38,13 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

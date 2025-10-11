@@ -19,7 +19,7 @@ export default function TabLayout() {
             await logout();
             // Use setTimeout to ensure navigation is ready
             setTimeout(() => {
-              router.replace('/(auth)/login');
+              router.replace('/(auth)/landing');
             }, 100);
           },
         },
