@@ -19,7 +19,7 @@ export default function TabLayout() {
             await logout();
             // Use setTimeout to ensure navigation is ready
             setTimeout(() => {
-              router.replace('/(auth)/landing');
+              router.replace('./index');
             }, 100);
           },
         },
@@ -47,7 +47,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
