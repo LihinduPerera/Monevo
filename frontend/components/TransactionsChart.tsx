@@ -36,8 +36,8 @@ const TransactionsChart: React.FC<Props> = ({ transactions }) => {
   );
 
   return (
-    <View className="bg-white rounded-lg p-4 shadow-sm mb-4">
-      <Text className="text-lg font-bold mb-3 text-gray-800">
+    <View className="bg-[#1a1a2e] rounded-2xl p-6 mb-6 border border-purple-900/50">
+      <Text className="text-xl font-bold mb-4 text-white">
         Income vs Expenses (Last 30)
       </Text>
 
@@ -48,13 +48,13 @@ const TransactionsChart: React.FC<Props> = ({ transactions }) => {
             datasets: [
               {
                 data: incomeData,
-                color: () => '#16a34a', // green for income
-                strokeWidth: 2,
+                color: () => '#10b981', // green for income
+                strokeWidth: 3,
               },
               {
                 data: expenseData,
-                color: () => '#dc2626', // red for expense
-                strokeWidth: 2,
+                color: () => '#ef4444', // red for expense
+                strokeWidth: 3,
               },
             ],
             legend: ['Income', 'Expenses'],
@@ -62,15 +62,20 @@ const TransactionsChart: React.FC<Props> = ({ transactions }) => {
           width={screenWidth}
           height={220}
           chartConfig={{
-            backgroundColor: '#ffffff',
-            backgroundGradientFrom: '#ffffff',
-            backgroundGradientTo: '#ffffff',
+            backgroundColor: '#1a1a2e',
+            backgroundGradientFrom: '#1a1a2e',
+            backgroundGradientTo: '#1a1a2e',
             decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(75, 85, 99, ${opacity})`,
+            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
             style: { borderRadius: 16 },
             propsForDots: {
-              r: '3',
+              r: '4',
+              strokeWidth: '2',
+            },
+            propsForBackgroundLines: {
+              stroke: '#374151',
+              strokeDasharray: '',
             },
           }}
           bezier
@@ -80,7 +85,9 @@ const TransactionsChart: React.FC<Props> = ({ transactions }) => {
           }}
         />
       ) : (
-        <Text className="text-gray-500">No data to display</Text>
+        <View className="bg-[#0f0f23] rounded-xl p-8 items-center">
+          <Text className="text-gray-400 text-center">No data to display yet. Add some transactions to see your financial trends.</Text>
+        </View>
       )}
     </View>
   );

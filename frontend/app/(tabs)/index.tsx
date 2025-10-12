@@ -42,38 +42,43 @@ export default function HomeScreen() {
   // Show loading while checking authentication
   if (!appReady) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-lg text-gray-600">Loading...</Text>
+      <View className="flex-1 bg-[#030014] justify-center items-center">
+        <Text className="text-lg text-purple-200">Loading...</Text>
       </View>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-lg text-gray-600">Redirecting to login...</Text>
+      <View className="flex-1 bg-[#030014] justify-center items-center">
+        <Text className="text-lg text-purple-200">Redirecting to login...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-[#030014]">
       <ScrollView 
         className="flex-1 p-4"
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refreshTransactions} />
+          <RefreshControl 
+            refreshing={loading} 
+            onRefresh={refreshTransactions}
+            tintColor="#8b5cf6"
+            colors={['#8b5cf6']}
+          />
         }
       >
-        <Text className="text-2xl font-bold mb-2 text-gray-800 mt-14">
+        <Text className="text-2xl font-bold mb-2 text-white mt-14">
           Welcome back, {user?.name}!
         </Text>
-        <Text className="text-gray-600 mb-4">Here's your financial overview</Text>
+        <Text className="text-purple-200 mb-4">Here's your financial overview</Text>
         
         <SummaryCard transactions={transactions} />
 
         <TransactionsChart transactions={transactions} />
         
-        <Text className="text-lg font-semibold mb-3 text-gray-800">Recent Transactions</Text>
+        <Text className="text-lg font-semibold mb-3 text-white">Recent Transactions</Text>
         <TransactionList
           transactions={recentTransactions}
           onDelete={handleDelete}

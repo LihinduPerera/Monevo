@@ -30,20 +30,31 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#3B82F6',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: '#8b5cf6',
+        tabBarInactiveTintColor: '#6b7280',
+        tabBarStyle: {
+          backgroundColor: '#030014',
+          borderTopColor: '#374151',
+          borderTopWidth: 1,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
         headerStyle: {
-          backgroundColor: '#3B82F6',
+          backgroundColor: '#030014',
+          borderBottomColor: '#374151',
+          borderBottomWidth: 1,
         },
         headerTintColor: '#FFFFFF',
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-        // headerRight: () => (
-        //   <TouchableOpacity onPress={handleLogout} className="mr-4">
-        //     <Text className="text-white font-semibold">Logout</Text>
-        //   </TouchableOpacity>
-        // ),
+        headerRight: () => (
+          <TouchableOpacity onPress={handleLogout} className="mr-4">
+            <Ionicons name="log-out-outline" size={24} color="#8b5cf6" />
+          </TouchableOpacity>
+        ),
       }}
     >
       <Tabs.Screen
@@ -63,7 +74,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="card" size={size} color={color} />
           ),
-          // headerShown: false,
         }}
       />
       <Tabs.Screen
@@ -73,7 +83,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
-          // headerShown: false,
         }}
       />
     </Tabs>
