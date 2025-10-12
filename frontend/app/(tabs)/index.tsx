@@ -58,7 +58,8 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-[#030014]">
-      <ScrollView 
+      <ScrollView
+      showsVerticalScrollIndicator={false}
         className="flex-1 p-4"
         refreshControl={
           <RefreshControl 
