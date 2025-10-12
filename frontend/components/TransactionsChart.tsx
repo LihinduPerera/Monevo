@@ -11,9 +11,10 @@ interface Props {
 }
 
 const screenWidth = Dimensions.get('window').width - 32;
+const screenHeight = 400;
 
 const TransactionsChart: React.FC<Props> = ({ transactions }) => {
-  // Animation values
+  
   const glowAnim1 = useRef(new Animated.Value(0)).current;
   const glowAnim2 = useRef(new Animated.Value(0)).current;
   const glowAnim3 = useRef(new Animated.Value(0)).current;
@@ -61,6 +62,22 @@ const TransactionsChart: React.FC<Props> = ({ transactions }) => {
   const totalIncome = incomeData.reduce((a, b) => a + b, 0);
   const totalExpense = expenseData.reduce((a, b) => a + b, 0);
   const netProfit = totalIncome - totalExpense;
+
+  // Generate random directions for glow animations
+  const glowDirections = useRef({
+    glow1: {
+      x: [Math.random() * screenWidth, Math.random() * screenWidth, Math.random() * screenWidth],
+      y: [Math.random() * screenHeight, Math.random() * screenHeight, Math.random() * screenHeight]
+    },
+    glow2: {
+      x: [Math.random() * screenWidth, Math.random() * screenWidth, Math.random() * screenWidth],
+      y: [Math.random() * screenHeight, Math.random() * screenHeight, Math.random() * screenHeight]
+    },
+    glow3: {
+      x: [Math.random() * screenWidth, Math.random() * screenWidth, Math.random() * screenWidth],
+      y: [Math.random() * screenHeight, Math.random() * screenHeight, Math.random() * screenHeight]
+    }
+  }).current;
 
   // Multiple glowing orbs moving around
   useEffect(() => {
@@ -135,35 +152,35 @@ const TransactionsChart: React.FC<Props> = ({ transactions }) => {
     ]).start();
   }, [transactions]);
 
-  // Interpolate glow positions
+  // Interpolate glow positions with random directions
   const glow1X = glowAnim1.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [-50, screenWidth * 0.7, screenWidth + 50],
+    outputRange: glowDirections.glow1.x,
   });
 
   const glow1Y = glowAnim1.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [50, 200, 100],
+    outputRange: glowDirections.glow1.y,
   });
 
   const glow2X = glowAnim2.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [screenWidth + 50, screenWidth * 0.3, -50],
+    outputRange: glowDirections.glow2.x,
   });
 
   const glow2Y = glowAnim2.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [150, 50, 250],
+    outputRange: glowDirections.glow2.y,
   });
 
   const glow3X = glowAnim3.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [screenWidth / 2, -50, screenWidth + 50],
+    outputRange: glowDirections.glow3.x,
   });
 
   const glow3Y = glowAnim3.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [300, 150, 200],
+    outputRange: glowDirections.glow3.y,
   });
 
   const glow1Opacity = glowAnim1.interpolate({
@@ -346,11 +363,10 @@ const TransactionsChart: React.FC<Props> = ({ transactions }) => {
                         color: () => '#38bdf8', // cyan
                         strokeWidth: 3,
                       },
-
                     ],
                   }}
-                  width={screenWidth - 50}
-                  height={240}
+                  width={screenWidth - 30}
+                  height={260}
                   chartConfig={{
                     backgroundGradientFromOpacity: 0,
                     backgroundGradientToOpacity: 0.5,
