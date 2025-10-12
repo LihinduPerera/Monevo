@@ -1,7 +1,8 @@
 import { Tabs, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { TouchableOpacity, Text, Alert } from "react-native";
+import { TouchableOpacity, Text, Alert, View, Platform } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
+import { BlurView } from 'expo-blur';
 
 export default function TabLayout() {
   const { user, logout } = useAuth();
@@ -17,7 +18,6 @@ export default function TabLayout() {
           style: "destructive",
           onPress: async () => {
             await logout();
-            // Use setTimeout to ensure navigation is ready
             setTimeout(() => {
               router.replace('/landing');
             }, 200);
@@ -30,30 +30,84 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#8b5cf6',
-        tabBarInactiveTintColor: '#6b7280',
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.7)',
         tabBarStyle: {
-          backgroundColor: '#030014',
-          borderTopColor: '#374151',
-          borderTopWidth: 1,
+          position: 'absolute',
+          borderTopWidth: 0,
+          backgroundColor: 'transparent',
+          elevation: 0,
+          // Size and spacing
+          height: 90,
+          paddingBottom: 20,
+          paddingTop: 10,
         },
+        tabBarBackground: () => (
+          <BlurView
+            intensity={80}
+            tint="dark"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              borderTopColor: 'rgba(139, 92, 246, 0.3)',
+              borderTopWidth: 1,
+            }}
+          />
+        ),
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '500',
+          fontWeight: '600',
+          marginTop: 4,
         },
         headerStyle: {
-          backgroundColor: '#030014',
-          borderBottomColor: '#374151',
-          borderBottomWidth: 1,
+          backgroundColor: 'transparent',
+          borderBottomWidth: 0,
+          elevation: 0,
         },
         headerTintColor: '#FFFFFF',
         headerTitleStyle: {
           fontWeight: 'bold',
+          fontSize: 18,
         },
+        headerBackground: () => (
+          <BlurView
+            intensity={80}
+            tint="dark"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              borderBottomColor: 'rgba(139, 92, 246, 0.3)',
+              borderBottomWidth: 1,
+            }}
+          />
+        ),
         headerRight: () => (
-          <TouchableOpacity onPress={handleLogout} className="mr-4">
-            <Ionicons name="log-out-outline" size={24} color="#8b5cf6" />
-          </TouchableOpacity>
+          <BlurView
+            intensity={40}
+            tint="dark"
+            style={{
+              borderRadius: 20,
+              overflow: 'hidden',
+              marginRight: 16,
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.2)',
+            }}
+          >
+            <TouchableOpacity 
+              onPress={handleLogout} 
+              style={{
+                padding: 8,
+              }}
+            >
+              <Ionicons name="log-out-outline" size={20} color="#ffffff" />
+            </TouchableOpacity>
+          </BlurView>
         ),
       }}
     >
@@ -61,8 +115,22 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <BlurView
+              intensity={focused ? 40 : 0}
+              tint="dark"
+              style={{
+                borderRadius: 20,
+                padding: 8,
+                backgroundColor: focused ? 'rgba(139, 92, 246, 0.3)' : 'transparent',
+              }}
+            >
+              <Ionicons 
+                name={focused ? "home" : "home-outline"} 
+                size={size} 
+                color={color} 
+              />
+            </BlurView>
           ),
           headerShown: false,
         }}
@@ -71,18 +139,48 @@ export default function TabLayout() {
         name="transactions"
         options={{
           title: 'Transactions',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="card" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <BlurView
+              intensity={focused ? 40 : 0}
+              tint="dark"
+              style={{
+                borderRadius: 20,
+                padding: 8,
+                backgroundColor: focused ? 'rgba(139, 92, 246, 0.3)' : 'transparent',
+              }}
+            >
+              <Ionicons 
+                name={focused ? "card" : "card-outline"} 
+                size={size} 
+                color={color} 
+              />
+            </BlurView>
           ),
+          headerTitle: 'Transactions',
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <BlurView
+              intensity={focused ? 40 : 0}
+              tint="dark"
+              style={{
+                borderRadius: 20,
+                padding: 8,
+                backgroundColor: focused ? 'rgba(139, 92, 246, 0.3)' : 'transparent',
+              }}
+            >
+              <Ionicons 
+                name={focused ? "person" : "person-outline"} 
+                size={size} 
+                color={color} 
+              />
+            </BlurView>
           ),
+          headerTitle: 'Profile',
         }}
       />
     </Tabs>

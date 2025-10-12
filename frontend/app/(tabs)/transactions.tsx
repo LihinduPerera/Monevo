@@ -5,6 +5,7 @@ import TransactionForm from '@/components/TransactionForm';
 import TransactionList from '@/components/TransactionList';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TransactionScreen() {
   const { 
@@ -32,35 +33,41 @@ export default function TransactionScreen() {
   // Show loading while checking authentication
   if (!appReady) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-lg text-gray-600">Loading...</Text>
+      <View className="flex-1 bg-[#030014] justify-center items-center">
+        <Text className="text-lg text-purple-200">Loading...</Text>
       </View>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <View className="flex-1 bg-gray-50 justify-center items-center">
-        <Text className="text-lg text-gray-600">Redirecting to login...</Text>
+      <View className="flex-1 bg-[#030014] justify-center items-center">
+        <Text className="text-lg text-purple-200">Redirecting to login...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-[#030014]">
       <ScrollView 
         className="flex-1 p-4"
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refreshTransactions} />
+          <RefreshControl 
+            refreshing={loading} 
+            onRefresh={refreshTransactions}
+            tintColor="#8b5cf6"
+            colors={['#8b5cf6']}
+          />
         }
       >
         {/* Sync Button */}
         <TouchableOpacity
           onPress={handleSync}
-          className="bg-green-500 rounded-lg p-4 mb-4"
+          className="bg-purple-600 rounded-2xl p-4 mb-6 flex-row justify-center items-center border border-purple-500/50"
         >
-          <Text className="text-white text-center font-semibold text-lg">
-            🔄 Sync Pending Transactions
+          <Ionicons name="cloud-upload-outline" size={24} color="#ffffff" />
+          <Text className="text-white text-center font-semibold text-lg ml-2">
+            Sync Pending Transactions
           </Text>
         </TouchableOpacity>
 
@@ -70,7 +77,7 @@ export default function TransactionScreen() {
         />
         
         <View className="mt-6">
-          <Text className="text-lg font-semibold mb-3 text-gray-800">All Transactions</Text>
+          <Text className="text-xl font-bold mb-4 text-white">All Transactions</Text>
           <TransactionList
             transactions={transactions}
             onDelete={deleteTransaction}
