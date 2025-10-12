@@ -3,7 +3,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { initDatabase } from "@/services/database";
 import './global.css';
 import { useEffect, useState } from "react";
-import { View, Text, Alert } from "react-native";
+import { View, Text, Alert, StatusBar } from "react-native";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
@@ -40,10 +40,11 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="landing" />
-          <Stack.Screen name="(tabs)" />
-        </Stack>
+        <StatusBar hidden={true}/>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="landing"/>
+            <Stack.Screen name="(tabs)"/>
+          </Stack>
       </AuthProvider>
     </GestureHandlerRootView>
   );

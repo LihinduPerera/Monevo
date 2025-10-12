@@ -5,6 +5,7 @@ import TransactionList from '@/components/TransactionList';
 import { useTransactions } from '@/hooks/useTransaction';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
+import TransactionsChart from '@/components/TransactionsChart';
 
 export default function HomeScreen() {
   const { transactions, loading, deleteTransaction, refreshTransactions, syncPendingTransactions } = useTransactions();
@@ -63,12 +64,14 @@ export default function HomeScreen() {
           <RefreshControl refreshing={loading} onRefresh={refreshTransactions} />
         }
       >
-        <Text className="text-2xl font-bold mb-2 text-gray-800">
+        <Text className="text-2xl font-bold mb-2 text-gray-800 mt-14">
           Welcome back, {user?.name}!
         </Text>
         <Text className="text-gray-600 mb-4">Here's your financial overview</Text>
         
         <SummaryCard transactions={transactions} />
+
+        <TransactionsChart transactions={transactions} />
         
         <Text className="text-lg font-semibold mb-3 text-gray-800">Recent Transactions</Text>
         <TransactionList

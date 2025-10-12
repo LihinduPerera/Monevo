@@ -39,11 +39,11 @@ export default function TabLayout() {
         headerTitleStyle: {
           fontWeight: 'bold',
         },
-        headerRight: () => (
-          <TouchableOpacity onPress={handleLogout} className="mr-4">
-            <Text className="text-white font-semibold">Logout</Text>
-          </TouchableOpacity>
-        ),
+        // headerRight: () => (
+        //   <TouchableOpacity onPress={handleLogout} className="mr-4">
+        //     <Text className="text-white font-semibold">Logout</Text>
+        //   </TouchableOpacity>
+        // ),
       }}
     >
       <Tabs.Screen
@@ -53,6 +53,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
+          headerShown: false,
         }}
       />
       <Tabs.Screen
@@ -62,6 +63,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="card" size={size} color={color} />
           ),
+          // headerShown: false,
         }}
       />
       <Tabs.Screen
@@ -71,6 +73,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
+          // headerShown: false,
         }}
       />
     </Tabs>

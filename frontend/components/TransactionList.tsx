@@ -50,14 +50,20 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelet
             <Text className="text-gray-500 text-sm">
               {transaction.category} • {formatDate(transaction.date)}
             </Text>
-            {isAuthenticated && transaction.synced && (
-              <Text className="text-green-500 text-xs mt-1">✓ Synced with cloud</Text>
+            {isAuthenticated && !!transaction.synced && (
+              <Text className="text-green-500 text-xs mt-1">
+                ✓ Synced with cloud
+              </Text>
             )}
             {isAuthenticated && !transaction.synced && (
-              <Text className="text-yellow-500 text-xs mt-1">⚠ Local only - Sync pending</Text>
+              <Text className="text-yellow-500 text-xs mt-1">
+                ⚠ Local only - Sync pending
+              </Text>
             )}
             {!isAuthenticated && (
-              <Text className="text-orange-500 text-xs mt-1">🔐 Login to sync</Text>
+              <Text className="text-orange-500 text-xs mt-1">
+                🔐 Login to sync
+              </Text>
             )}
           </View>
           
