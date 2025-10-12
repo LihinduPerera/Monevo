@@ -41,7 +41,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
+          <Stack.Screen name="landing" />
           <Stack.Screen name="(tabs)" />
         </Stack>
       </AuthProvider>

@@ -15,7 +15,7 @@ export default function HomeScreen() {
   useEffect(() => {
     // Only navigate when app is ready and user is not authenticated
     if (appReady && !isAuthenticated) {
-      router.replace('./index');
+      router.replace('/landing');
     }
   }, [isAuthenticated, appReady]);
 
