@@ -190,22 +190,22 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
             </View>
 
             {/* Sync Status */}
-            {isAuthenticated && goal.synced && (
-              <View className="flex-row items-center mt-3 justify-center">
-                <Ionicons name="cloud-done" size={16} color="#10b981" />
-                <Text className="text-green-400 text-sm ml-2">
-                  Synced with cloud
-                </Text>
-              </View>
-            )}
-            {isAuthenticated && !goal.synced && (
-              <View className="flex-row items-center mt-3 justify-center">
-                <Ionicons name="cloud-offline" size={16} color="#f59e0b" />
-                <Text className="text-yellow-400 text-sm ml-2">
-                  Local only - Sync pending
-                </Text>
-              </View>
-            )}
+            {isAuthenticated && !!goal.synced && (
+  <View className="flex-row items-center mt-3 justify-center">
+    <Ionicons name="cloud-done" size={16} color="#10b981" />
+    <Text className="text-green-400 text-sm ml-2">
+      Synced with cloud
+    </Text>
+  </View>
+)}
+{isAuthenticated && !goal.synced && (
+  <View className="flex-row items-center mt-3 justify-center">
+    <Ionicons name="cloud-offline" size={16} color="#f59e0b" />
+    <Text className="text-yellow-400 text-sm ml-2">
+      Local only - Sync pending
+    </Text>
+  </View>
+)}
           </View>
         </BlurView>
       </LinearGradient>
