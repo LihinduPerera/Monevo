@@ -14,18 +14,29 @@ export interface Transaction {
     user_id?: number;
 }
 
+export interface Goal {
+    id?: number;
+    target_amount: number;
+    target_month: number;
+    target_year: number;
+    created_at?: string;
+    synced?: boolean;
+    backend_id?: number;
+    user_id?: number;
+}
+
 const db = SQLite.openDatabaseSync('finance.db');
 
 export const initDatabase = () => {
     try {
-        // First, check if the transactions table exists and has the user_id column
+        // Check if transactions table exists
         const tableInfo = db.getAllSync(`
             SELECT name FROM sqlite_master 
             WHERE type='table' AND name='transactions'
         `);
         
         if (tableInfo.length === 0) {
-            // Table doesn't exist, create it with all columns
+            // Create transactions table
             db.execSync(`
                 CREATE TABLE transactions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,39 +52,49 @@ export const initDatabase = () => {
             `);
             console.log('Created transactions table with user_id column');
         } else {
-            // Table exists, check if user_id column exists
+            // Check if user_id column exists
             try {
-                // This will throw an error if user_id column doesn't exist
                 db.getAllSync('SELECT user_id FROM transactions LIMIT 1');
-                console.log('user_id column already exists');
+                console.log('user_id column already exists in transactions');
             } catch (error) {
-                // user_id column doesn't exist, add it
                 console.log('Adding user_id column to transactions table');
                 db.execSync('ALTER TABLE transactions ADD COLUMN user_id INTEGER');
             }
         }
-    } catch (error) {
-        console.error('Error initializing database:', error);
-        // If anything fails, try to recreate the table
-        try {
-            db.execSync('DROP TABLE IF EXISTS transactions');
+
+        // Check if goals table exists
+        const goalsTableInfo = db.getAllSync(`
+            SELECT name FROM sqlite_master 
+            WHERE type='table' AND name='goals'
+        `);
+        
+        if (goalsTableInfo.length === 0) {
+            // Create goals table
             db.execSync(`
-                CREATE TABLE transactions (
+                CREATE TABLE goals (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    amount REAL NOT NULL,
-                    desc TEXT NOT NULL,
-                    type TEXT NOT NULL,
-                    category TEXT NOT NULL,
-                    date TEXT NOT NULL,
+                    target_amount REAL NOT NULL,
+                    target_month INTEGER NOT NULL,
+                    target_year INTEGER NOT NULL,
                     synced BOOLEAN DEFAULT 0,
                     backend_id INTEGER,
-                    user_id INTEGER
+                    user_id INTEGER,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 );
             `);
-            console.log('Recreated transactions table with user_id column');
-        } catch (recreateError) {
-            console.error('Failed to recreate table:', recreateError);
+            console.log('Created goals table');
+        } else {
+            // Check if user_id column exists in goals
+            try {
+                db.getAllSync('SELECT user_id FROM goals LIMIT 1');
+                console.log('user_id column already exists in goals');
+            } catch (error) {
+                console.log('Adding user_id column to goals table');
+                db.execSync('ALTER TABLE goals ADD COLUMN user_id INTEGER');
+            }
         }
+    } catch (error) {
+        console.error('Error initializing database:', error);
     }
 };
 
@@ -92,7 +113,7 @@ const getCurrentUserId = async (): Promise<number | null> => {
     }
 };
 
-// Add transaction to SQLite (offline first)
+// Transaction functions
 export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<number> => {
     const {amount, desc, type, category, date} = transaction;
     const userId = await getCurrentUserId();
@@ -111,7 +132,6 @@ export const addTransaction = async (transaction: Omit<Transaction, 'id'>): Prom
     }
 }
 
-// Add transaction with backend sync
 export const addTransactionWithSync = async (
     transaction: Omit<Transaction, 'id'>, 
     onBackendSuccess?: () => void
@@ -150,30 +170,48 @@ export const addTransactionWithSync = async (
     }
 }
 
-// Get transactions from local database for current user
 export const getTransactions = async (): Promise<Transaction[]> => {
     const userId = await getCurrentUserId();
     
     try {
         if (userId) {
-            // Get transactions for current user only
             const result = db.getAllSync(
                 'SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC', 
                 [userId]
             );
             return result as Transaction[];
         } else {
-            // If no user is logged in, return empty array
             return [];
         }
     } catch (error) {
         console.error('Error getting transactions:', error);
-        // If there's an error (like missing user_id column), return empty array
         return [];
     }
 }
 
-// Delete transaction from local database
+export const getTransactionsByMonth = async (month: number, year: number): Promise<Transaction[]> => {
+    const userId = await getCurrentUserId();
+    
+    try {
+        if (userId) {
+            const result = db.getAllSync(
+                `SELECT * FROM transactions 
+                 WHERE user_id = ? 
+                 AND strftime('%m', date) = ? 
+                 AND strftime('%Y', date) = ?
+                 ORDER BY date DESC`,
+                [userId, month.toString().padStart(2, '0'), year.toString()]
+            );
+            return result as Transaction[];
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error('Error getting transactions by month:', error);
+        return [];
+    }
+}
+
 export const deleteTransaction = async (id: number): Promise<void> => {
     const userId = await getCurrentUserId();
     
@@ -199,7 +237,6 @@ export const deleteTransaction = async (id: number): Promise<void> => {
     }
 }
 
-// Sync unsynced transactions with backend
 export const syncPendingTransactions = async (): Promise<number> => {
     const userId = await getCurrentUserId();
     if (!userId) return 0;
@@ -241,7 +278,166 @@ export const syncPendingTransactions = async (): Promise<number> => {
     }
 }
 
-// Clear all transactions for current user (useful for testing)
+// Goal functions
+export const addGoal = async (goal: Omit<Goal, 'id'>): Promise<number> => {
+    const { target_amount, target_month, target_year } = goal;
+    const userId = await getCurrentUserId();
+    
+    try {
+        const result = db.runSync(
+            'INSERT INTO goals (target_amount, target_month, target_year, synced, user_id) VALUES (?, ?, ?, ?, ?)',
+            [target_amount, target_month, target_year, 0, userId]
+        );
+        
+        const localId = result.lastInsertRowId;
+        return localId;
+    } catch (error) {
+        console.error('Error adding goal to local database:', error);
+        throw error;
+    }
+}
+
+export const addGoalWithSync = async (
+    goal: Omit<Goal, 'id'>, 
+    onBackendSuccess?: () => void
+): Promise<number> => {
+    const { target_amount, target_month, target_year } = goal;
+    const userId = await getCurrentUserId();
+    
+    try {
+        const result = db.runSync(
+            'INSERT INTO goals (target_amount, target_month, target_year, synced, user_id) VALUES (?, ?, ?, ?, ?)',
+            [target_amount, target_month, target_year, 0, userId]
+        );
+        
+        const localId = result.lastInsertRowId;
+        
+        try {
+            const backendResult = await backendService.addGoal(goal);
+            
+            db.runSync(
+                'UPDATE goals SET synced = 1, backend_id = ? WHERE id = ?',
+                [backendResult.data.id, localId]
+            );
+            
+            if (onBackendSuccess) {
+                onBackendSuccess();
+            }
+            
+            return localId;
+        } catch (backendError) {
+            console.log('Backend sync failed, goal saved locally only');
+            return localId;
+        }
+    } catch (error) {
+        console.error('Error adding goal:', error);
+        throw error;
+    }
+}
+
+export const getGoals = async (): Promise<Goal[]> => {
+    const userId = await getCurrentUserId();
+    
+    try {
+        if (userId) {
+            const result = db.getAllSync(
+                'SELECT * FROM goals WHERE user_id = ? ORDER BY target_year DESC, target_month DESC', 
+                [userId]
+            );
+            return result as Goal[];
+        } else {
+            return [];
+        }
+    } catch (error) {
+        console.error('Error getting goals:', error);
+        return [];
+    }
+}
+
+export const getGoalByMonth = async (month: number, year: number): Promise<Goal | null> => {
+    const userId = await getCurrentUserId();
+    
+    try {
+        if (userId) {
+            const result = db.getAllSync(
+                'SELECT * FROM goals WHERE user_id = ? AND target_month = ? AND target_year = ?', 
+                [userId, month, year]
+            ) as Goal[];
+            
+            return result.length > 0 ? result[0] : null;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error('Error getting goal by month:', error);
+        return null;
+    }
+}
+
+export const deleteGoal = async (id: number): Promise<void> => {
+    const userId = await getCurrentUserId();
+    
+    try {
+        const goals = db.getAllSync(
+            'SELECT * FROM goals WHERE id = ? AND user_id = ?', 
+            [id, userId]
+        ) as Goal[];
+        const goal = goals[0];
+        
+        if (goal && goal.synced && goal.backend_id) {
+            try {
+                await backendService.deleteGoal(goal.backend_id);
+            } catch (backendError) {
+                console.log('Backend delete failed, but local delete will proceed');
+            }
+        }
+        
+        db.runSync('DELETE FROM goals WHERE id = ? AND user_id = ?', [id, userId]);
+    } catch (error) {
+        console.error('Error deleting goal:', error);
+        throw error;
+    }
+}
+
+export const syncPendingGoals = async (): Promise<number> => {
+    const userId = await getCurrentUserId();
+    if (!userId) return 0;
+
+    try {
+        const unsyncedGoals = db.getAllSync(
+            'SELECT * FROM goals WHERE synced = 0 AND user_id = ?', 
+            [userId]
+        ) as Goal[];
+        
+        let syncedCount = 0;
+        
+        for (const goal of unsyncedGoals) {
+            try {
+                const { target_amount, target_month, target_year } = goal;
+                const backendResult = await backendService.addGoal({
+                    target_amount,
+                    target_month,
+                    target_year
+                });
+                
+                db.runSync(
+                    'UPDATE goals SET synced = 1, backend_id = ? WHERE id = ? AND user_id = ?',
+                    [backendResult.data.id, goal.id, userId]
+                );
+                
+                syncedCount++;
+            } catch (error) {
+                console.log(`Failed to sync goal ${goal.id}`);
+            }
+        }
+        
+        return syncedCount;
+    } catch (error) {
+        console.error('Error syncing pending goals:', error);
+        return 0;
+    }
+}
+
 export const clearUserTransactions = async (): Promise<void> => {
     const userId = await getCurrentUserId();
     if (userId) {
@@ -250,6 +446,18 @@ export const clearUserTransactions = async (): Promise<void> => {
             console.log('Cleared transactions for user:', userId);
         } catch (error) {
             console.error('Error clearing transactions:', error);
+        }
+    }
+}
+
+export const clearUserGoals = async (): Promise<void> => {
+    const userId = await getCurrentUserId();
+    if (userId) {
+        try {
+            db.runSync('DELETE FROM goals WHERE user_id = ?', [userId]);
+            console.log('Cleared goals for user:', userId);
+        } catch (error) {
+            console.error('Error clearing goals:', error);
         }
     }
 }

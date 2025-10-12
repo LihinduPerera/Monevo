@@ -1,16 +1,20 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions, Alert } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import CustomHeader from '@/components/CustomHeader';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useGoals } from '@/hooks/useGoal';
+import { useTransactions } from '@/hooks/useTransaction';
+import { formatCurrency } from '@/utils/helpers';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const { user, isAuthenticated, appReady, logout } = useAuth();
+  const { goals, refreshGoals, clearGoals } = useGoals();
+  const { transactions, refreshTransactions, clearTransactions } = useTransactions();
 
   // Animation refs for the 5 orbs
   const glowAnim1 = useRef(new Animated.Value(0)).current;
@@ -71,7 +75,7 @@ export default function ProfileScreen() {
 
   // Create orb animations
   useEffect(() => {
-    const createOrbAnimation = (animValue: Animated.Value, duration: number, delay: number) => {
+    const createOrbAnimation = (animValue, duration, delay) => {
       return Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
@@ -107,6 +111,25 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     await logout();
     router.replace('/landing');
+  };
+
+  const handleClearData = () => {
+    Alert.alert(
+      'Clear All Data',
+      'This will delete all your transactions and goals. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            await clearTransactions();
+            await clearGoals();
+            Alert.alert('Success', 'All data has been cleared');
+          },
+        },
+      ]
+    );
   };
 
   // Create animated orbs
@@ -174,13 +197,18 @@ export default function ProfileScreen() {
     );
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
   };
+
+  const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
 
   return (
     <View className="flex-1">
@@ -198,15 +226,15 @@ export default function ProfileScreen() {
       {/* Glass-like Content */}
       <BlurView intensity={50} tint="dark" className="flex-1">
         {/* <CustomHeader title="Profile" /> */}
-        
+
         <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
           {/* Profile Header */}
-          <View className="items-center mb-6 mt-28">
-            <View className="bg-purple-600/80 w-24 h-24 rounded-full items-center justify-center mb-4 border-4 border-purple-500/30 backdrop-blur-lg">
-              <Ionicons name="person" size={40} color="#ffffff" />
+          <View className="items-center mt-20 mb-8">
+            <View className="w-24 h-24 bg-purple-500/20 rounded-full items-center justify-center border-2 border-purple-500/50 mb-4">
+              <Ionicons name="person" size={40} color="#8b5cf6" />
             </View>
-            <Text className="text-2xl font-bold text-white mb-1">{user.name}</Text>
-            <Text className="text-purple-300/80">{user.email}</Text>
+            <Text className="text-2xl font-bold text-white">{user?.name}</Text>
+            <Text className="text-purple-300 mt-1">{user?.email}</Text>
           </View>
 
           {/* Profile Information Card */}
@@ -257,17 +285,73 @@ export default function ProfileScreen() {
                   <Ionicons name="shield-checkmark-outline" size={20} color="#8b5cf6" />
                   <Text className="text-gray-300 font-medium ml-2">Account Status</Text>
                 </View>
-                <View className={`px-3 py-1 rounded-full backdrop-blur-lg ${
-                  user.is_active ? 'bg-green-500/20' : 'bg-red-500/20'
-                }`}>
-                  <Text className={`font-semibold ${
-                    user.is_active ? 'text-green-400' : 'text-red-400'
+                <View className={`px-3 py-1 rounded-full backdrop-blur-lg ${user.is_active ? 'bg-green-500/20' : 'bg-red-500/20'
                   }`}>
+                  <Text className={`font-semibold ${user.is_active ? 'text-green-400' : 'text-red-400'
+                    }`}>
                     {user.is_active ? 'Active' : 'Inactive'}
                   </Text>
                 </View>
               </View>
             </View>
+          </View>
+
+          {/* Goals Summary (glass-like, matches new UI) */}
+          <View className="mb-8 overflow-hidden rounded-3xl border border-cyan-500/20 shadow-2xl shadow-cyan-500/10">
+            <LinearGradient
+              colors={['#0a0a1a', '#1a1a2e', '#16213e']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="rounded-3xl"
+            >
+              <BlurView intensity={40} style={{ borderRadius: 24 }}>
+                <View className="p-6">
+                  <View className="flex-row justify-between items-center mb-4">
+                    <Text className="text-xl font-bold text-white">Your Goals</Text>
+                    <View className="flex-row items-center bg-purple-500/20 px-3 py-1 rounded-full">
+                      <Ionicons name="trophy" size={16} color="#8b5cf6" />
+                      <Text className="text-purple-400 text-sm font-medium ml-1">
+                        {goals?.length ?? 0} Active
+                      </Text>
+                    </View>
+                  </View>
+
+                  {(!goals || goals.length === 0) ? (
+                    <View className="items-center py-6">
+                      <Ionicons name="flag-outline" size={48} color="#6b7280" />
+                      <Text className="text-gray-400 text-lg mt-2">No goals set</Text>
+                      <Text className="text-gray-500 text-center mt-1">
+                        Set monthly income goals to track your progress
+                      </Text>
+                    </View>
+                  ) : (
+                    <View className="space-y-3">
+                      {goals.slice(0, 3).map((goal) => (
+                        <View key={goal.id} className="flex-row justify-between items-center bg-[#0f0f23]/50 rounded-2xl p-3">
+                          <View>
+                            <Text className="text-white font-medium">
+                              {monthNames[goal.target_month - 1]} {goal.target_year}
+                            </Text>
+                            <Text className="text-gray-400 text-sm">
+                              Target: {formatCurrency(goal.target_amount)}
+                            </Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+                        </View>
+                      ))}
+
+                      {goals.length > 3 && (
+                        <TouchableOpacity className="items-center py-2" onPress={() => router.push('/(tabs)')}>
+                          <Text className="text-purple-400 text-sm font-medium">
+                            View all {goals.length} goals
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
+                </View>
+              </BlurView>
+            </LinearGradient>
           </View>
 
           {/* Info Card */}
@@ -280,14 +364,75 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Logout Button */}
-          <TouchableOpacity
+          {/* Actions (glass-like buttons matching new UI) */}
+          <View className="space-y-4 mb-8">
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/transactions')}
+              className="bg-purple-500/20 border border-purple-500/50 rounded-2xl p-4 flex-row items-center"
+            >
+              <Ionicons name="card-outline" size={24} color="#8b5cf6" />
+              <Text className="text-white text-lg font-medium ml-3 flex-1">
+                Manage Transactions
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)')}
+              className="bg-blue-500/20 border border-blue-500/50 rounded-2xl p-4 flex-row items-center"
+            >
+              <Ionicons name="trophy-outline" size={24} color="#60a5fa" />
+              <Text className="text-white text-lg font-medium ml-3 flex-1">
+                View Goals Progress
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Danger Zone (glass-like, with confirmations) */}
+          <View className="mb-32 overflow-hidden rounded-3xl border border-rose-500/20">
+            <LinearGradient
+              colors={['#1a1a2e', '#16213e']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="rounded-3xl"
+            >
+              <View className="p-6">
+                <Text className="text-xl font-bold text-rose-400 mb-4">Danger Zone</Text>
+
+                <TouchableOpacity
+                  onPress={handleClearData}
+                  className="bg-rose-500/20 border border-rose-500/50 rounded-2xl p-4 flex-row items-center mb-3"
+                >
+                  <Ionicons name="trash-outline" size={24} color="#ef4444" />
+                  <Text className="text-rose-400 text-lg font-medium ml-3 flex-1">
+                    Clear All Data
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#ef4444" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleLogout}
+                  className="bg-rose-500/20 border border-rose-500/50 rounded-2xl p-4 flex-row items-center"
+                >
+                  <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+                  <Text className="text-rose-400 text-lg font-medium ml-3 flex-1">
+                    Logout
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* Logout Button (kept as in your new design) */}
+          {/* <TouchableOpacity
             onPress={handleLogout}
             className="bg-red-500/20 border border-red-500/20 rounded-2xl p-4 flex-row justify-center items-center mb-8 backdrop-blur-lg"
           >
             <Ionicons name="log-out-outline" size={20} color="#ef4444" />
             <Text className="text-red-400 font-semibold text-lg ml-2">Logout</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </ScrollView>
       </BlurView>
     </View>

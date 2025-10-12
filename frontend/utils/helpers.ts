@@ -27,3 +27,19 @@ export const calculateSummary = (transactions: any[]) => {
 
     return { income, expenses, balance };
 }
+
+export const getMonthName = (month: number): string => {
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[month - 1] || '';
+}
+
+export const getCurrentMonthAndYear = (): { month: number, year: number } => {
+    const now = new Date();
+    return {
+        month: now.getMonth() + 1,
+        year: now.getFullYear()
+    };
+}
