@@ -1,57 +1,64 @@
-import { Tabs, router } from "expo-router";
+import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { TouchableOpacity, Text, Alert } from "react-native";
-import { useAuth } from "@/contexts/AuthContext";
+import { View } from "react-native";
+import { BlurView } from 'expo-blur';
 
 export default function TabLayout() {
-  const { user, logout } = useAuth();
-
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            await logout();
-            // Use setTimeout to ensure navigation is ready
-            setTimeout(() => {
-              router.replace('/');
-            }, 200);
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#3B82F6',
-        tabBarInactiveTintColor: '#9CA3AF',
-        headerStyle: {
-          backgroundColor: '#3B82F6',
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.7)',
+        tabBarStyle: {
+          position: 'absolute',
+          borderTopWidth: 0,
+          backgroundColor: 'transparent',
+          elevation: 0,
+          height: 90,
+          paddingBottom: 20,
+          paddingTop: 10,
         },
-        headerTintColor: '#FFFFFF',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-        headerRight: () => (
-          <TouchableOpacity onPress={handleLogout} className="mr-4">
-            <Text className="text-white font-semibold">Logout</Text>
-          </TouchableOpacity>
+        tabBarBackground: () => (
+          <BlurView
+            intensity={80}
+            tint="dark"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              borderTopColor: 'rgba(139, 92, 246, 0.3)',
+              borderTopWidth: 1,
+            }}
+          />
         ),
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+          marginTop: 4,
+        },
+        headerShown: false, // Hide default headers, we'll use custom ones
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <View 
+              style={{
+                borderRadius: 20,
+                padding: 8,
+                backgroundColor: focused ? 'rgba(139, 92, 246, 0.3)' : 'transparent',
+              }}
+            >
+              <Ionicons 
+                name={focused ? "home" : "home-outline"} 
+                size={size} 
+                color={color} 
+              />
+            </View>
           ),
         }}
       />
@@ -59,8 +66,20 @@ export default function TabLayout() {
         name="transactions"
         options={{
           title: 'Transactions',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="card" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <View 
+              style={{
+                borderRadius: 20,
+                padding: 8,
+                backgroundColor: focused ? 'rgba(139, 92, 246, 0.3)' : 'transparent',
+              }}
+            >
+              <Ionicons 
+                name={focused ? "card" : "card-outline"} 
+                size={size} 
+                color={color} 
+              />
+            </View>
           ),
         }}
       />
@@ -68,8 +87,20 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <View 
+              style={{
+                borderRadius: 20,
+                padding: 8,
+                backgroundColor: focused ? 'rgba(139, 92, 246, 0.3)' : 'transparent',
+              }}
+            >
+              <Ionicons 
+                name={focused ? "person" : "person-outline"} 
+                size={size} 
+                color={color} 
+              />
+            </View>
           ),
         }}
       />
