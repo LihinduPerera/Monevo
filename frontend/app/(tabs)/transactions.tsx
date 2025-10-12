@@ -53,6 +53,7 @@ export default function TransactionScreen() {
       <CustomHeader title="Transactions" />
       
       <ScrollView 
+      showsVerticalScrollIndicator={false}
         className="flex-1 p-4"
         refreshControl={
           <RefreshControl 

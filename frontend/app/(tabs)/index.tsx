@@ -58,7 +58,8 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-[#030014]">
-      <ScrollView 
+      <ScrollView
+      showsVerticalScrollIndicator={false}
         className="flex-1 p-4"
         refreshControl={
           <RefreshControl 
@@ -74,7 +75,7 @@ export default function HomeScreen() {
         </Text>
         <Text className="text-purple-200 mb-4">Here's your financial overview</Text>
         
-        <SummaryCard transactions={transactions} />
+        {/* <SummaryCard transactions={transactions} /> */}
 
         <TransactionsChart transactions={transactions} />
         
