@@ -1,32 +1,9 @@
-import { Tabs, router } from "expo-router";
+import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { TouchableOpacity, Text, Alert, View, Platform } from "react-native";
-import { useAuth } from "@/contexts/AuthContext";
+import { View } from "react-native";
 import { BlurView } from 'expo-blur';
 
 export default function TabLayout() {
-  const { user, logout } = useAuth();
-
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            await logout();
-            setTimeout(() => {
-              router.replace('/landing');
-            }, 200);
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <Tabs
       screenOptions={{
@@ -37,7 +14,6 @@ export default function TabLayout() {
           borderTopWidth: 0,
           backgroundColor: 'transparent',
           elevation: 0,
-          // Size and spacing
           height: 90,
           paddingBottom: 20,
           paddingTop: 10,
@@ -62,53 +38,7 @@ export default function TabLayout() {
           fontWeight: '600',
           marginTop: 4,
         },
-        headerStyle: {
-          backgroundColor: 'transparent',
-          borderBottomWidth: 0,
-          elevation: 0,
-        },
-        headerTintColor: '#FFFFFF',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-          fontSize: 18,
-        },
-        headerBackground: () => (
-          <BlurView
-            intensity={80}
-            tint="dark"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              borderBottomColor: 'rgba(139, 92, 246, 0.3)',
-              borderBottomWidth: 1,
-            }}
-          />
-        ),
-        headerRight: () => (
-          <BlurView
-            intensity={40}
-            tint="dark"
-            style={{
-              borderRadius: 20,
-              overflow: 'hidden',
-              marginRight: 16,
-              borderWidth: 1,
-              borderColor: 'rgba(255, 255, 255, 0.2)',
-            }}
-          >
-            <TouchableOpacity 
-              onPress={handleLogout} 
-              style={{
-                padding: 8,
-              }}
-            >
-              <Ionicons name="log-out-outline" size={20} color="#ffffff" />
-            </TouchableOpacity>
-          </BlurView>
-        ),
+        headerShown: false, // Hide default headers, we'll use custom ones
       }}
     >
       <Tabs.Screen
@@ -116,9 +46,7 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size, focused }) => (
-            <BlurView
-              intensity={focused ? 40 : 0}
-              tint="dark"
+            <View 
               style={{
                 borderRadius: 20,
                 padding: 8,
@@ -130,9 +58,8 @@ export default function TabLayout() {
                 size={size} 
                 color={color} 
               />
-            </BlurView>
+            </View>
           ),
-          headerShown: false,
         }}
       />
       <Tabs.Screen
@@ -140,9 +67,7 @@ export default function TabLayout() {
         options={{
           title: 'Transactions',
           tabBarIcon: ({ color, size, focused }) => (
-            <BlurView
-              intensity={focused ? 40 : 0}
-              tint="dark"
+            <View 
               style={{
                 borderRadius: 20,
                 padding: 8,
@@ -154,9 +79,8 @@ export default function TabLayout() {
                 size={size} 
                 color={color} 
               />
-            </BlurView>
+            </View>
           ),
-          headerTitle: 'Transactions',
         }}
       />
       <Tabs.Screen
@@ -164,9 +88,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size, focused }) => (
-            <BlurView
-              intensity={focused ? 40 : 0}
-              tint="dark"
+            <View 
               style={{
                 borderRadius: 20,
                 padding: 8,
@@ -178,9 +100,8 @@ export default function TabLayout() {
                 size={size} 
                 color={color} 
               />
-            </BlurView>
+            </View>
           ),
-          headerTitle: 'Profile',
         }}
       />
     </Tabs>

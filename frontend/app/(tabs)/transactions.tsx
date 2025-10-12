@@ -5,6 +5,7 @@ import TransactionForm from '@/components/TransactionForm';
 import TransactionList from '@/components/TransactionList';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
+import CustomHeader from '@/components/CustomHeader';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function TransactionScreen() {
@@ -49,6 +50,8 @@ export default function TransactionScreen() {
 
   return (
     <View className="flex-1 bg-[#030014]">
+      <CustomHeader title="Transactions" />
+      
       <ScrollView 
         className="flex-1 p-4"
         refreshControl={
@@ -63,7 +66,7 @@ export default function TransactionScreen() {
         {/* Sync Button */}
         <TouchableOpacity
           onPress={handleSync}
-          className="bg-purple-600 rounded-2xl p-4 mb-6 flex-row justify-center items-center border border-purple-500/50"
+          className="bg-purple-600 rounded-2xl mt-32 p-4 mb-6 flex-row justify-center items-center border border-purple-500/50"
         >
           <Ionicons name="cloud-upload-outline" size={24} color="#ffffff" />
           <Text className="text-white text-center font-semibold text-lg ml-2">
