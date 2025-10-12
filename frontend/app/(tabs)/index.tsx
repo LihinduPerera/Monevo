@@ -74,7 +74,7 @@ export default function HomeScreen() {
         </Text>
         <Text className="text-purple-200 mb-4">Here's your financial overview</Text>
         
-        <SummaryCard transactions={transactions} />
+        {/* <SummaryCard transactions={transactions} /> */}
 
         <TransactionsChart transactions={transactions} />
         

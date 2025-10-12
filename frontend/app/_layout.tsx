@@ -40,7 +40,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <StatusBar hidden={true}/>
+        {/* <StatusBar hidden={true}/> */}
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="landing"/>
             <Stack.Screen name="(tabs)"/>
