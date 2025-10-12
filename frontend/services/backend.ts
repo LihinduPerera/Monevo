@@ -11,6 +11,14 @@ export interface BackendTransaction {
   date: string;
 }
 
+export interface Goal {
+  id?: number;
+  target_amount: number;
+  target_month: number;
+  target_year: number;
+  created_at?: string;
+}
+
 export interface User {
   id: number;
   name: string;
@@ -59,7 +67,6 @@ class BackendService {
       
       if (!response.ok) {
         if (response.status === 401) {
-          // Token is invalid or expired
           await AsyncStorage.removeItem('auth_token');
           await AsyncStorage.removeItem('user_data');
           throw new Error('Invalid token');
@@ -122,6 +129,11 @@ class BackendService {
     return result.data;
   }
 
+  async getTransactionsByMonth(month: number, year: number): Promise<BackendTransaction[]> {
+    const result = await this.request(`/transactions/month/${month}/${year}`);
+    return result.data;
+  }
+
   async deleteTransaction(id: number) {
     const result = await this.request(`/transactions/${id}`, {
       method: 'DELETE',
@@ -134,6 +146,43 @@ class BackendService {
     const result = await this.request(`/transactions/${id}`, {
       method: 'PUT',
       body: JSON.stringify(transaction),
+    });
+
+    return result;
+  }
+
+  // Goal methods
+  async addGoal(goal: Omit<Goal, 'id'>) {
+    const result = await this.request('/goals', {
+      method: 'POST',
+      body: JSON.stringify(goal),
+    });
+
+    return result;
+  }
+
+  async getGoals(): Promise<Goal[]> {
+    const result = await this.request('/goals');
+    return result.data;
+  }
+
+  async getGoalByMonth(month: number, year: number): Promise<Goal | null> {
+    const result = await this.request(`/goals/${month}/${year}`);
+    return result.data;
+  }
+
+  async deleteGoal(id: number) {
+    const result = await this.request(`/goals/${id}`, {
+      method: 'DELETE',
+    });
+
+    return result;
+  }
+
+  async updateGoal(id: number, goal: Omit<Goal, 'id'>) {
+    const result = await this.request(`/goals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(goal),
     });
 
     return result;

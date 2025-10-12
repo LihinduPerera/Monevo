@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View, Animated, Dimensions } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View, Animated, Dimensions, Modal } from 'react-native';
 import { Transaction } from '../services/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Kaede } from 'react-native-textinput-effects';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -19,6 +20,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
   const [description, setDescription] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [category, setCategory] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useAuth();
 
@@ -93,6 +96,17 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
     };
   }, []);
 
+  const handleDateChange = (event: any, date?: Date) => {
+    setShowDatePicker(false);
+    if (date) {
+      setSelectedDate(date);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toISOString().split('T')[0];
+  };
+
   const handleSubmit = async () => {
     if (!amount || !description || !category) return Alert.alert('Error', 'Please fill all fields');
     const parsedAmount = parseFloat(amount);
@@ -103,7 +117,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
       desc: description,
       type,
       category,
-      date: new Date().toISOString(),
+      date: formatDate(selectedDate),
     };
 
     setLoading(true);
@@ -112,6 +126,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
       setAmount('');
       setDescription('');
       setCategory('');
+      setSelectedDate(new Date()); // Reset to current date
     } catch {
       Alert.alert('Error', 'Failed to add transaction');
     } finally {
@@ -244,6 +259,36 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Date Picker */}
+          <View className="mb-6">
+            <Text className="font-semibold mb-3 text-white text-lg ml-1">Transaction Date</Text>
+            <TouchableOpacity
+              className="rounded-2xl overflow-hidden border border-purple-900/30 backdrop-blur-lg shadow-lg"
+              onPress={() => setShowDatePicker(true)}
+            >
+              <View className="bg-[#0f0f23]/80 p-4 flex-row justify-between items-center">
+                <Text className="text-white text-base">
+                  {selectedDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color="#8b5cf6" />
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="spinner"
+              onChange={handleDateChange}
+              maximumDate={new Date()}
+            />
+          )}
 
           {/* Amount Input */}
           <View className="mb-6 rounded-2xl overflow-hidden border border-purple-900/30 backdrop-blur-lg shadow-lg">
