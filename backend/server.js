@@ -4,6 +4,7 @@ const cors = require('cors');
 const { initDatabase, closeConnection } = require('./config/database');
 const transactionRoutes = require('./routes/transactionRoutes');
 const authRoutes = require('./routes/authRoutes');
+const goalRoutes = require('./routes/goalRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const { authenticateToken } = require('./middleware/authMiddleware');
 
@@ -35,13 +36,15 @@ app.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       auth: '/api/auth',
-      transactions: '/api/transactions'
+      transactions: '/api/transactions',
+      goals: '/api/goals'
     }
   });
 });
 
 // Protected routes
 app.use('/api', authenticateToken, transactionRoutes);
+app.use('/api', authenticateToken, goalRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

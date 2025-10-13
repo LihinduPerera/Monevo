@@ -3,7 +3,7 @@ const { getConnection } = require('../config/database');
 class Transaction {
   static async create(transactionData) {
     const connection = await getConnection();
-    const { amount, description, type, category, user_id } = transactionData;
+    const { amount, description, type, category, user_id, transaction_date } = transactionData;
     
     try {
       // Get next sequence value
@@ -14,15 +14,16 @@ class Transaction {
 
       // Insert with explicit ID from sequence and user_id
       await connection.execute(
-        `INSERT INTO transactions (id, amount, description, type, category, user_id) 
-         VALUES (:id, :amount, :description, :type, :category, :user_id)`,
+        `INSERT INTO transactions (id, amount, description, type, category, user_id, transaction_date) 
+         VALUES (:id, :amount, :description, :type, :category, :user_id, TO_DATE(:transaction_date, 'YYYY-MM-DD'))`,
         {
           id: nextId,
           amount: amount,
           description: description,
           type: type,
           category: category,
-          user_id: user_id
+          user_id: user_id,
+          transaction_date: transaction_date
         },
         { autoCommit: true }
       );
@@ -39,10 +40,11 @@ class Transaction {
     try {
       const result = await connection.execute(
         `SELECT id, amount, description, type, category, 
-                TO_CHAR(date_created, 'YYYY-MM-DD"T"HH24:MI:SS.FF3') as date 
+                TO_CHAR(date_created, 'YYYY-MM-DD"T"HH24:MI:SS.FF3') as date_created,
+                TO_CHAR(transaction_date, 'YYYY-MM-DD') as transaction_date
          FROM transactions 
          WHERE user_id = :user_id
-         ORDER BY date_created DESC`,
+         ORDER BY transaction_date DESC, date_created DESC`,
         [userId]
       );
       
@@ -52,7 +54,8 @@ class Transaction {
         desc: row.DESCRIPTION,
         type: row.TYPE,
         category: row.CATEGORY,
-        date: row.DATE
+        date: row.TRANSACTION_DATE,
+        date_created: row.DATE_CREATED
       }));
     } catch (error) {
       console.error('Error getting transactions:', error);
@@ -65,7 +68,8 @@ class Transaction {
     try {
       const result = await connection.execute(
         `SELECT id, amount, description, type, category, 
-                TO_CHAR(date_created, 'YYYY-MM-DD"T"HH24:MI:SS.FF3') as date 
+                TO_CHAR(date_created, 'YYYY-MM-DD"T"HH24:MI:SS.FF3') as date_created,
+                TO_CHAR(transaction_date, 'YYYY-MM-DD') as transaction_date
          FROM transactions 
          WHERE id = :id AND user_id = :user_id`,
         [id, userId]
@@ -82,10 +86,41 @@ class Transaction {
         desc: row.DESCRIPTION,
         type: row.TYPE,
         category: row.CATEGORY,
-        date: row.DATE
+        date: row.TRANSACTION_DATE,
+        date_created: row.DATE_CREATED
       };
     } catch (error) {
       console.error('Error getting transaction by ID:', error);
+      throw error;
+    }
+  }
+
+  static async getByMonth(userId, month, year) {
+    const connection = await getConnection();
+    try {
+      const result = await connection.execute(
+        `SELECT id, amount, description, type, category, 
+                TO_CHAR(date_created, 'YYYY-MM-DD"T"HH24:MI:SS.FF3') as date_created,
+                TO_CHAR(transaction_date, 'YYYY-MM-DD') as transaction_date
+         FROM transactions 
+         WHERE user_id = :user_id 
+         AND EXTRACT(MONTH FROM transaction_date) = :month 
+         AND EXTRACT(YEAR FROM transaction_date) = :year
+         ORDER BY transaction_date DESC`,
+        [userId, month, year]
+      );
+      
+      return result.rows.map(row => ({
+        id: row.ID,
+        amount: parseFloat(row.AMOUNT),
+        desc: row.DESCRIPTION,
+        type: row.TYPE,
+        category: row.CATEGORY,
+        date: row.TRANSACTION_DATE,
+        date_created: row.DATE_CREATED
+      }));
+    } catch (error) {
+      console.error('Error getting transactions by month:', error);
       throw error;
     }
   }
@@ -108,18 +143,20 @@ class Transaction {
 
   static async update(id, transactionData, userId) {
     const connection = await getConnection();
-    const { amount, description, type, category } = transactionData;
+    const { amount, description, type, category, transaction_date } = transactionData;
     
     try {
       const result = await connection.execute(
         `UPDATE transactions 
-         SET amount = :amount, description = :description, type = :type, category = :category 
+         SET amount = :amount, description = :description, type = :type, category = :category, 
+             transaction_date = TO_DATE(:transaction_date, 'YYYY-MM-DD')
          WHERE id = :id AND user_id = :user_id`,
         { 
           amount: amount, 
           description: description, 
           type: type, 
           category: category, 
+          transaction_date: transaction_date,
           id: id,
           user_id: userId
         },
