@@ -368,7 +368,7 @@ export default function ProfileScreen() {
           <View className="space-y-4 mb-8">
             <TouchableOpacity
               onPress={() => router.push('/(tabs)/transactions')}
-              className="bg-purple-500/20 border border-purple-500/50 rounded-2xl p-4 flex-row items-center"
+              className="bg-purple-500/20 border border-purple-500/50 rounded-2xl p-4 flex-row items-center mb-3"
             >
               <Ionicons name="card-outline" size={24} color="#8b5cf6" />
               <Text className="text-white text-lg font-medium ml-3 flex-1">
