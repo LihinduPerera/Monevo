@@ -203,31 +203,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Monthly Summary */}
-        <View className="bg-[#1a1a2e] rounded-2xl p-4 mb-6 border border-purple-900/50">
-          <Text className="text-lg font-semibold mb-3 text-white text-center">
-            {monthNames[selectedMonth - 1]} Summary
-          </Text>
-          <View className="flex-row justify-between">
-            <View className="items-center">
-              <Text className="text-emerald-400 text-xl font-bold">{formatCurrency(monthIncome)}</Text>
-              <Text className="text-gray-400 text-sm">Income</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-rose-400 text-xl font-bold">{formatCurrency(monthExpenses)}</Text>
-              <Text className="text-gray-400 text-sm">Expenses</Text>
-            </View>
-            <View className="items-center">
-              <Text className={`text-xl font-bold ${
-                monthIncome - monthExpenses >= 0 ? 'text-emerald-400' : 'text-rose-400'
-              }`}>
-                {formatCurrency(monthIncome - monthExpenses)}
-              </Text>
-              <Text className="text-gray-400 text-sm">Net</Text>
-            </View>
-          </View>
-        </View>
-
         <TransactionsChart transactions={transactions} />
         
         <View className='mb-32'>
