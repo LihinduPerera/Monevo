@@ -20,8 +20,8 @@ export default function SignInForm({ onClose, onSwitchToRegister }: SignInFormPr
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
 

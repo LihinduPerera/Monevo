@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions, Alert } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Animated, Dimensions, Alert, Modal } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useGoals } from '@/hooks/useGoal';
 import { useTransactions } from '@/hooks/useTransaction';
-import { formatCurrency } from '@/utils/helpers';
+import { formatCurrency, getMonthName } from '@/utils/helpers';
+import { reportService } from '@/services/reportService';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -15,6 +16,11 @@ export default function ProfileScreen() {
   const { user, isAuthenticated, appReady, logout } = useAuth();
   const { goals, refreshGoals, clearGoals } = useGoals();
   const { transactions, refreshTransactions, clearTransactions } = useTransactions();
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [selectedReportType, setSelectedReportType] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Animation refs for the 5 orbs
   const glowAnim1 = useRef(new Animated.Value(0)).current;
@@ -75,7 +81,7 @@ export default function ProfileScreen() {
 
   // Create orb animations
   useEffect(() => {
-    const createOrbAnimation = (animValue, duration, delay) => {
+    const createOrbAnimation = (animValue: Animated.Value, duration: number, delay: number) => {
       return Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
@@ -131,6 +137,31 @@ export default function ProfileScreen() {
       ]
     );
   };
+
+  const handleGenerateReport = async () => {
+    if (generatingReport) return;
+    
+    setGeneratingReport(true);
+    try {
+      let pdfUri: string;
+      
+      if (selectedReportType === 'monthly') {
+        pdfUri = await reportService.generateMonthlyReport(selectedMonth, selectedYear);
+      } else {
+        pdfUri = await reportService.generateYearlyReport(selectedYear);
+      }
+      
+      await reportService.sharePDF(pdfUri);
+      setShowReportModal(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to generate report. Please try again.');
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
   // Create animated orbs
   const renderAnimatedOrbs = () => {
@@ -197,7 +228,7 @@ export default function ProfileScreen() {
     );
   }
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -225,8 +256,6 @@ export default function ProfileScreen() {
 
       {/* Glass-like Content */}
       <BlurView intensity={50} tint="dark" className="flex-1">
-        {/* <CustomHeader title="Profile" /> */}
-
         <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
           {/* Profile Header */}
           <View className="items-center mt-20 mb-8">
@@ -367,6 +396,17 @@ export default function ProfileScreen() {
           {/* Actions (glass-like buttons matching new UI) */}
           <View className="space-y-4 mb-8">
             <TouchableOpacity
+              onPress={() => setShowReportModal(true)}
+              className="bg-green-500/20 border border-green-500/50 rounded-2xl p-4 flex-row items-center mb-3"
+            >
+              <Ionicons name="document-text-outline" size={24} color="#10b981" />
+              <Text className="text-white text-lg font-medium ml-3 flex-1">
+                Generate Report
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
               onPress={() => router.push('/(tabs)/transactions')}
               className="bg-purple-500/20 border border-purple-500/50 rounded-2xl p-4 flex-row items-center mb-3"
             >
@@ -424,17 +464,179 @@ export default function ProfileScreen() {
               </View>
             </LinearGradient>
           </View>
-
-          {/* Logout Button (kept as in your new design) */}
-          {/* <TouchableOpacity
-            onPress={handleLogout}
-            className="bg-red-500/20 border border-red-500/20 rounded-2xl p-4 flex-row justify-center items-center mb-8 backdrop-blur-lg"
-          >
-            <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-            <Text className="text-red-400 font-semibold text-lg ml-2">Logout</Text>
-          </TouchableOpacity> */}
         </ScrollView>
       </BlurView>
+
+      {/* Report Generation Modal */}
+      <Modal
+        visible={showReportModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <View className="flex-1 bg-black/70 justify-center p-6">
+          <BlurView intensity={50} className="rounded-3xl overflow-hidden border border-cyan-500/20">
+            <LinearGradient
+              colors={['#0a0a1a', '#1a1a2e', '#16213e']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="rounded-3xl"
+            >
+              <View className="p-6">
+                <View className="flex-row justify-between items-center mb-6">
+                  <Text className="text-2xl font-bold text-white">Generate Report</Text>
+                  <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                    <Ionicons name="close" size={24} color="#6b7280" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Report Type Selection */}
+                <View className="flex-row mb-6 rounded-2xl overflow-hidden border border-purple-900/30 backdrop-blur-lg">
+                  <TouchableOpacity
+                    className={`flex-1 py-4 flex-row justify-center items-center ${
+                      selectedReportType === 'monthly' ? 'bg-purple-500/20' : 'bg-[#0f0f23]/80'
+                    }`}
+                    onPress={() => setSelectedReportType('monthly')}
+                  >
+                    <Ionicons 
+                      name="calendar" 
+                      size={20} 
+                      color={selectedReportType === 'monthly' ? '#8b5cf6' : '#6b7280'} 
+                    />
+                    <Text className={`ml-2 font-semibold text-base ${
+                      selectedReportType === 'monthly' ? 'text-purple-400' : 'text-gray-500'
+                    }`}>
+                      Monthly
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className={`flex-1 py-4 flex-row justify-center items-center ${
+                      selectedReportType === 'yearly' ? 'bg-purple-500/20' : 'bg-[#0f0f23]/80'
+                    }`}
+                    onPress={() => setSelectedReportType('yearly')}
+                  >
+                    <Ionicons 
+                      name="stats-chart" 
+                      size={20} 
+                      color={selectedReportType === 'yearly' ? '#8b5cf6' : '#6b7280'} 
+                    />
+                    <Text className={`ml-2 font-semibold text-base ${
+                      selectedReportType === 'yearly' ? 'text-purple-400' : 'text-gray-500'
+                    }`}>
+                      Yearly
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Month Selection (only for monthly reports) */}
+                {selectedReportType === 'monthly' && (
+                  <View className="mb-6">
+                    <Text className="font-semibold mb-3 text-white text-lg">Select Month</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+                      <View className="flex-row space-x-2">
+                        {months.map(month => (
+                          <TouchableOpacity
+                            key={month}
+                            className={`px-4 py-3 rounded-2xl border backdrop-blur-lg ${
+                              selectedMonth === month
+                                ? 'bg-purple-500/20 border-purple-500/50'
+                                : 'bg-[#0f0f23]/80 border-purple-900/30'
+                            }`}
+                            onPress={() => setSelectedMonth(month)}
+                          >
+                            <Text className={`font-medium ${
+                              selectedMonth === month ? 'text-purple-400' : 'text-gray-400'
+                            }`}>
+                              {getMonthName(month).slice(0, 3)}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  </View>
+                )}
+
+                {/* Year Selection */}
+                <View className="mb-6">
+                  <Text className="font-semibold mb-3 text-white text-lg">Select Year</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+                    <View className="flex-row space-x-2">
+                      {years.map(year => (
+                        <TouchableOpacity
+                          key={year}
+                          className={`px-4 py-3 rounded-2xl border backdrop-blur-lg ${
+                            selectedYear === year
+                              ? 'bg-purple-500/20 border-purple-500/50'
+                              : 'bg-[#0f0f23]/80 border-purple-900/30'
+                          }`}
+                          onPress={() => setSelectedYear(year)}
+                        >
+                          <Text className={`font-medium ${
+                            selectedYear === year ? 'text-purple-400' : 'text-gray-400'
+                          }`}>
+                            {year}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
+
+                {/* Report Preview Info */}
+                <View className="bg-blue-500/20 border border-blue-500/20 rounded-2xl p-4 mb-6">
+                  <View className="flex-row items-start">
+                    <Ionicons name="information-circle-outline" size={20} color="#60a5fa" className="mt-0.5" />
+                    <View className="ml-3 flex-1">
+                      <Text className="text-blue-300 text-sm font-medium mb-1">
+                        {selectedReportType === 'monthly' 
+                          ? `Monthly Report for ${getMonthName(selectedMonth)} ${selectedYear}`
+                          : `Yearly Report for ${selectedYear}`
+                        }
+                      </Text>
+                      <Text className="text-blue-400 text-xs">
+                        Includes financial summary, transaction analysis, category breakdown, and goals progress.
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Action Buttons */}
+                <View className="flex-row space-x-4">
+                  <TouchableOpacity
+                    className="flex-1 rounded-2xl p-4 border border-gray-500/50 backdrop-blur-lg"
+                    onPress={() => setShowReportModal(false)}
+                  >
+                    <Text className="text-gray-300 text-center font-bold text-lg">
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className={`flex-1 rounded-2xl p-4 border backdrop-blur-lg ${
+                      generatingReport ? 'opacity-70' : ''
+                    } bg-purple-500/20 border-purple-500/50`}
+                    onPress={handleGenerateReport}
+                    disabled={generatingReport}
+                  >
+                    <Text className="text-white text-center font-bold text-lg">
+                      {generatingReport ? (
+                        <View className="flex-row items-center justify-center">
+                          <Ionicons name="cloud-download" size={20} color="#ffffff" />
+                          <Text className="text-white ml-2">Generating...</Text>
+                        </View>
+                      ) : (
+                        <View className="flex-row items-center justify-center">
+                          <Ionicons name="document-text" size={20} color="#ffffff" />
+                          <Text className="text-white ml-2">Generate PDF</Text>
+                        </View>
+                      )}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </LinearGradient>
+          </BlurView>
+        </View>
+      </Modal>
     </View>
   );
 }
