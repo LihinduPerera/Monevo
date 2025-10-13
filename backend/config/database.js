@@ -39,11 +39,21 @@ const initDatabase = async () => {
       END;
     `);
 
-    // Check and create users table
+    await connection.execute(`
+      BEGIN
+        EXECUTE IMMEDIATE 'CREATE SEQUENCE goals_seq START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE';
+      EXCEPTION
+        WHEN OTHERS THEN
+          IF SQLCODE != -955 THEN
+            RAISE;
+          END IF;
+      END;
+    `);
+
+    // Check and create tables
     await checkAndCreateUsersTable();
-    
-    // Check and create transactions table
     await checkAndCreateTransactionsTable();
+    await checkAndCreateGoalsTable();
     
     console.log('Database initialized successfully');
     return connection;
@@ -56,7 +66,6 @@ const initDatabase = async () => {
 // Function to check and create users table
 const checkAndCreateUsersTable = async () => {
   try {
-    // Check if users table exists
     const tableExists = await connection.execute(`
       SELECT table_name 
       FROM user_tables 
@@ -64,12 +73,10 @@ const checkAndCreateUsersTable = async () => {
     `);
 
     if (tableExists.rows.length === 0) {
-      // Table doesn't exist, create it
       await createUsersTable();
       return;
     }
 
-    // Table exists, check if all required columns are present
     const requiredColumns = [
       'ID', 'NAME', 'EMAIL', 'PASSWORD', 'DATE_OF_BIRTH', 
       'IS_ACTIVE', 'LAST_LOGIN', 'CREATED_AT'
@@ -88,7 +95,6 @@ const checkAndCreateUsersTable = async () => {
       console.log(`Missing columns in USERS table: ${missingColumns.join(', ')}`);
       console.log('Dropping and recreating USERS table...');
       
-      // Drop and recreate the table
       await connection.execute('DROP TABLE users CASCADE CONSTRAINTS');
       await createUsersTable();
     } else {
@@ -121,7 +127,6 @@ const createUsersTable = async () => {
 // Function to check and create transactions table
 const checkAndCreateTransactionsTable = async () => {
   try {
-    // Check if transactions table exists
     const tableExists = await connection.execute(`
       SELECT table_name 
       FROM user_tables 
@@ -129,15 +134,13 @@ const checkAndCreateTransactionsTable = async () => {
     `);
 
     if (tableExists.rows.length === 0) {
-      // Table doesn't exist, create it
       await createTransactionsTable();
       return;
     }
 
-    // Table exists, check if all required columns are present
     const requiredColumns = [
       'ID', 'AMOUNT', 'DESCRIPTION', 'TYPE', 'CATEGORY', 
-      'USER_ID', 'DATE_CREATED'
+      'USER_ID', 'DATE_CREATED', 'TRANSACTION_DATE'
     ];
 
     const existingColumns = await connection.execute(`
@@ -153,13 +156,11 @@ const checkAndCreateTransactionsTable = async () => {
       console.log(`Missing columns in TRANSACTIONS table: ${missingColumns.join(', ')}`);
       console.log('Dropping and recreating TRANSACTIONS table...');
       
-      // Drop and recreate the table
       await connection.execute('DROP TABLE transactions CASCADE CONSTRAINTS');
       await createTransactionsTable();
     } else {
       console.log('TRANSACTIONS table exists with all required columns');
       
-      // Check if foreign key constraint exists
       try {
         const fkExists = await connection.execute(`
           SELECT constraint_name 
@@ -198,10 +199,50 @@ const createTransactionsTable = async () => {
       category VARCHAR2(100) NOT NULL,
       user_id NUMBER NOT NULL,
       date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      transaction_date DATE NOT NULL,
       CONSTRAINT fk_user_transaction FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
   console.log('Created TRANSACTIONS table with foreign key constraint');
+};
+
+// Function to check and create goals table
+const checkAndCreateGoalsTable = async () => {
+  try {
+    const tableExists = await connection.execute(`
+      SELECT table_name 
+      FROM user_tables 
+      WHERE table_name = 'GOALS'
+    `);
+
+    if (tableExists.rows.length === 0) {
+      await createGoalsTable();
+      return;
+    }
+
+    console.log('GOALS table already exists');
+
+  } catch (error) {
+    console.error('Error checking/creating goals table:', error);
+    throw error;
+  }
+};
+
+// Function to create goals table
+const createGoalsTable = async () => {
+  await connection.execute(`
+    CREATE TABLE goals (
+      id NUMBER PRIMARY KEY,
+      user_id NUMBER NOT NULL,
+      target_amount NUMBER NOT NULL,
+      target_month NUMBER NOT NULL,
+      target_year NUMBER NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_user_goal FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT unique_user_month_goal UNIQUE (user_id, target_month, target_year)
+    )
+  `);
+  console.log('Created GOALS table');
 };
 
 const getConnection = async () => {

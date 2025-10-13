@@ -7,14 +7,12 @@ const transactionController = {
       const { amount, desc, type, category, date } = req.body;
       const userId = req.user.id;
       
-      
-      if (!amount || !desc || !type || !category) {
+      if (!amount || !desc || !type || !category || !date) {
         return res.status(400).json({
           success: false,
-          message: 'All fields (amount, desc, type, category) are required'
+          message: 'All fields (amount, desc, type, category, date) are required'
         });
       }
-      
       
       if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({
@@ -28,7 +26,8 @@ const transactionController = {
         description: desc,
         type,
         category,
-        user_id: userId
+        user_id: userId,
+        transaction_date: date
       });
       
       res.status(201).json({
@@ -46,7 +45,6 @@ const transactionController = {
     }
   },
 
-  
   getTransactions: async (req, res) => {
     try {
       const userId = req.user.id;
@@ -66,7 +64,26 @@ const transactionController = {
     }
   },
 
-  
+  getTransactionsByMonth: async (req, res) => {
+    try {
+      const { month, year } = req.params;
+      const userId = req.user.id;
+      const transactions = await Transaction.getByMonth(userId, parseInt(month), parseInt(year));
+      
+      res.json({
+        success: true,
+        data: transactions
+      });
+    } catch (error) {
+      console.error('Get transactions by month error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch transactions',
+        error: error.message
+      });
+    }
+  },
+
   getTransactionById: async (req, res) => {
     try {
       const { id } = req.params;
@@ -94,7 +111,6 @@ const transactionController = {
     }
   },
 
-  
   deleteTransaction: async (req, res) => {
     try {
       const { id } = req.params;
@@ -122,21 +138,18 @@ const transactionController = {
     }
   },
 
-  
   updateTransaction: async (req, res) => {
     try {
       const { id } = req.params;
-      const { amount, desc, type, category } = req.body;
+      const { amount, desc, type, category, date } = req.body;
       const userId = req.user.id;
       
-      
-      if (!amount || !desc || !type || !category) {
+      if (!amount || !desc || !type || !category || !date) {
         return res.status(400).json({
           success: false,
-          message: 'All fields (amount, desc, type, category) are required'
+          message: 'All fields (amount, desc, type, category, date) are required'
         });
       }
-      
       
       if (!['income', 'expense'].includes(type)) {
         return res.status(400).json({
@@ -149,7 +162,8 @@ const transactionController = {
         amount: parseFloat(amount),
         description: desc,
         type,
-        category
+        category,
+        transaction_date: date
       }, userId);
       
       if (!updated) {
