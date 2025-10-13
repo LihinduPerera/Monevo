@@ -38,6 +38,36 @@ export interface AuthResponse {
   };
 }
 
+export interface ReportData {
+  period: {
+    month: number;
+    year: number;
+    monthName: string;
+  };
+  summary: {
+    income: number;
+    expenses: number;
+    net: number;
+    goalStatus?: any;
+    transactionCount: number;
+  };
+  analytics: any;
+  chartData: any;
+  transactions: BackendTransaction[];
+  generatedAt: string;
+}
+
+export interface YearlyReportData {
+  period: {
+    year: number;
+    type: string;
+  };
+  summary: any;
+  monthlyBreakdown: any;
+  goalsProgress: Goal[];
+  generatedAt: string;
+}
+
 class BackendService {
   private token: string | null = null;
 
@@ -195,6 +225,29 @@ class BackendService {
     } catch (error) {
       return false;
     }
+  }
+
+    async generateReport(month?: number, year?: number): Promise<ReportData> {
+    const params = new URLSearchParams();
+    if (month) params.append('month', month.toString());
+    if (year) params.append('year', year.toString());
+    
+    const queryString = params.toString();
+    const endpoint = queryString ? `/report?${queryString}` : '/report';
+    
+    const result = await this.request(endpoint);
+    return result.data;
+  }
+
+  async generateYearlyReport(year?: number): Promise<YearlyReportData> {
+    const params = new URLSearchParams();
+    if (year) params.append('year', year.toString());
+    
+    const queryString = params.toString();
+    const endpoint = queryString ? `/report/yearly?${queryString}` : '/report/yearly';
+    
+    const result = await this.request(endpoint);
+    return result.data;
   }
 }
 

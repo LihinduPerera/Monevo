@@ -5,6 +5,7 @@ const { initDatabase, closeConnection } = require('./config/database');
 const transactionRoutes = require('./routes/transactionRoutes');
 const authRoutes = require('./routes/authRoutes');
 const goalRoutes = require('./routes/goalRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const { authenticateToken } = require('./middleware/authMiddleware');
 
@@ -45,6 +46,7 @@ app.get('/', (req, res) => {
 // Protected routes
 app.use('/api', authenticateToken, transactionRoutes);
 app.use('/api', authenticateToken, goalRoutes);
+app.use('/api', authenticateToken, reportRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
