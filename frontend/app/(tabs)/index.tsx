@@ -230,11 +230,13 @@ export default function HomeScreen() {
 
         <TransactionsChart transactions={transactions} />
         
-        <Text className="text-lg font-semibold mb-3 text-white">Recent Transactions</Text>
-        <TransactionList
-          transactions={recentTransactions}
-          onDelete={handleDelete}
-        />
+        <View className='mb-32'>
+          <Text className="text-lg font-semibold mb-3 text-white">Recent Transactions</Text>
+          <TransactionList
+            transactions={recentTransactions}
+            onDelete={handleDelete}
+          />
+        </View>
       </ScrollView>
     </View>
   );

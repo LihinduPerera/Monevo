@@ -149,7 +149,7 @@ export default function LandingScreen() {
       </View>
 
       {/* Add extra blur layer for contrast */}
-      <BlurView intensity={90} tint="prominent" style={{ position: 'absolute', inset: 0 }} pointerEvents="none" />
+      <BlurView intensity={65} tint="prominent" style={{ position: 'absolute', inset: 0 }} pointerEvents="none" />
 
       {/* Main content */}
       <Animated.View
@@ -174,7 +174,8 @@ export default function LandingScreen() {
 
             {/* Get Started button */}
             <TouchableOpacity
-              style={{ backgroundColor: '#4a30ca', borderRadius: 10, padding: 16 }}
+            className='bg-purple-500/35 border-purple-500/50'
+              style={{ borderRadius: 10, padding: 16 }}
               onPress={handleButtonPress}
             >
               <Text style={{ color: '#fff', textAlign: 'center', fontSize: 16, fontWeight: '600' }}>

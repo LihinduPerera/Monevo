@@ -67,7 +67,7 @@ export default function TransactionScreen() {
         {/* Sync Button */}
         <TouchableOpacity
           onPress={handleSync}
-          className="bg-purple-600 rounded-2xl mt-32 p-4 mb-6 flex-row justify-center items-center border border-purple-500/50"
+          className="rounded-2xl mt-32 p-4 mb-6 flex-row justify-center items-center border bg-purple-500/20 border-purple-500/50"
         >
           <Ionicons name="cloud-upload-outline" size={24} color="#ffffff" />
           <Text className="text-white text-center font-semibold text-lg ml-2">
@@ -80,7 +80,7 @@ export default function TransactionScreen() {
           backendAvailable={backendAvailable} 
         />
         
-        <View className="mt-6">
+        <View className="mt-6 mb-32">
           <Text className="text-xl font-bold mb-4 text-white">All Transactions</Text>
           <TransactionList
             transactions={transactions}
