@@ -5,7 +5,7 @@
   <img src="./screenshots/SS2.gif" alt="Screenshot 2" width="200" style="margin:10px;"/>
   <img src="./screenshots/SS3.gif" alt="Screenshot 3" width="200" style="margin:10px;"/>
   <img src="./screenshots/SS4.gif" alt="Screenshot 4" width="200" style="margin:10px;"/>
-  <img src="./screenshots/SS5.gif" alt="Screenshot 5" width="600" style="margin:10px;"/>
+  <img src="./screenshots/SS5.gif" alt="Screenshot 5" width="450" style="margin:10px;"/>
 </p>
 
 ---
