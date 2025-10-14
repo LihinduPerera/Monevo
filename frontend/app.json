@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "coinflow",
-    "slug": "coinflow",
+    "name": "monevo",
+    "slug": "monevo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "coinflowdbms2",
+    "scheme": "monevo",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
