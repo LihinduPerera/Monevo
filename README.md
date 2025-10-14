@@ -9,7 +9,6 @@ Track your income, expenses, and savings with an elegant interface and real-time
 
 - 📱 **Mobile-first** interface powered by **Expo React Native**
 - 🌐 **RESTful API** backend with **Express.js**
-- 💾 **MongoDB** (or any preferred DB) integration for data storage
 - 🔐 Secure user authentication
 - 📊 Track expenses, incomes, and categories
 - 🕒 Real-time updates between frontend and backend
