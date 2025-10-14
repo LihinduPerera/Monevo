@@ -18,14 +18,10 @@ Track your income, expenses, and savings with an elegant interface and real-time
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="./SS1.gif" alt="Screenshot 1" width="200" style="margin:10px;"/>
-  <img src="./SS2.gif" alt="Screenshot 2" width="200" style="margin:10px;"/>
-  <img src="./SS3.gif" alt="Screenshot 3" width="200" style="margin:10px;"/>
-  <img src="./SS4.gif" alt="Screenshot 4" width="200" style="margin:10px;"/>
-  <img src="./SS5.gif" alt="Screenshot 5" width="200" style="margin:10px;"/>
+  <img src="./screenshots/SS1.gif" alt="Screenshot 1" width="200" style="margin:10px;"/>
+  <img src="./screenshots/SS2.gif" alt="Screenshot 2" width="200" style="margin:10px;"/>
+  <img src="./screenshots/SS3.gif" alt="Screenshot 3" width="200" style="margin:10px;"/>
+  <img src="./screenshots/SS4.gif" alt="Screenshot 4" width="200" style="margin:10px;"/>
+  <img src="./screenshots/SS5.gif" alt="Screenshot 5" width="200" style="margin:10px;"/>
 </p>
-
----
-
-## 🏗️ Project Structure
 
