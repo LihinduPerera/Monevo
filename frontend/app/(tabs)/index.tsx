@@ -14,8 +14,8 @@ import { getTransactionsByMonth } from '@/services/database';
 import { formatCurrency } from '@/utils/helpers';
 
 export default function HomeScreen() {
-  const { transactions, loading, deleteTransaction, refreshTransactions, syncPendingTransactions } = useTransactions();
-  const { goals, addGoal, deleteGoal, refreshGoals, syncPendingGoals } = useGoals();
+  const { transactions, loading, deleteTransaction, refreshTransactions, performFullDataSync } = useTransactions();
+  const { goals, addGoal, deleteGoal, refreshGoals } = useGoals();
   const { user, isAuthenticated, appReady } = useAuth();
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -60,8 +60,7 @@ export default function HomeScreen() {
   };
 
   const handleSync = async () => {
-    await syncPendingTransactions();
-    await syncPendingGoals();
+    await performFullDataSync(); // Updated to use full sync
   };
 
   const handleAddGoal = async (goalData: any) => {
@@ -111,7 +110,10 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl 
             refreshing={loading} 
-            onRefresh={refreshTransactions}
+            onRefresh={() => {
+              refreshTransactions();
+              refreshGoals();
+            }}
             tintColor="#8b5cf6"
             colors={['#8b5cf6']}
           />
@@ -162,7 +164,7 @@ export default function HomeScreen() {
           onPress={handleSync}
           className="bg-purple-600 rounded-2xl p-4 mb-6 flex-row justify-center items-center border border-purple-500/50"
         >
-          <Ionicons name="cloud-upload-outline" size={24} color="#ffffff" />
+          {/* <Ionicons name="cloud-sync-outline" size={24} color="#ffffff" /> */}
           <Text className="text-white text-center font-semibold text-lg ml-2">
             Sync All Data
           </Text>

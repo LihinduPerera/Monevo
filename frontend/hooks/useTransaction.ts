@@ -7,7 +7,9 @@ import {
     Transaction, 
     addTransactionWithSync, 
     syncPendingTransactions,
-    clearUserTransactions 
+    clearUserTransactions,
+    performFullSync,
+    syncTransactionsFromBackend
 } from "../services/database";
 import { backendService } from "../services/backend";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,13 +80,6 @@ export const useTransactions = () => {
                     [{ text: "OK" }]
                 );
             } 
-            // else {
-            //     Alert.alert(
-            //         "Sync Complete", 
-            //         "All transactions are already synced with cloud!",
-            //         [{ text: "OK" }]
-            //     );
-            // }
             await loadTransactions();
             return syncedCount;
         } catch (error) {
@@ -94,10 +89,70 @@ export const useTransactions = () => {
         }
     };
 
+    // NEW: Sync from backend to local
+    const syncFromBackend = async () => {
+        try {
+            const newTransactionsCount = await syncTransactionsFromBackend();
+            if (newTransactionsCount > 0) {
+                Alert.alert(
+                    "Sync Complete", 
+                    `Downloaded ${newTransactionsCount} new transactions from cloud!`,
+                    [{ text: "OK" }]
+                );
+            }
+            await loadTransactions();
+            return newTransactionsCount;
+        } catch (error) {
+            console.error('Error syncing from backend:', error);
+            Alert.alert("Sync Failed", "Failed to download transactions from cloud");
+            return 0;
+        }
+    };
+
+    // NEW: Perform full sync (both directions)
+    const performFullDataSync = async () => {
+        try {
+            const syncResult = await performFullSync();
+            let message = "Sync Complete!\n";
+            
+            if (syncResult.transactionsSynced > 0) {
+                message += `Uploaded ${syncResult.transactionsSynced} transactions\n`;
+            }
+            if (syncResult.goalsSynced > 0) {
+                message += `Uploaded ${syncResult.goalsSynced} goals\n`;
+            }
+            if (syncResult.newTransactions > 0) {
+                message += `Downloaded ${syncResult.newTransactions} transactions\n`;
+            }
+            if (syncResult.newGoals > 0) {
+                message += `Downloaded ${syncResult.newGoals} goals\n`;
+            }
+            
+            if (syncResult.transactionsSynced === 0 && syncResult.goalsSynced === 0 && 
+                syncResult.newTransactions === 0 && syncResult.newGoals === 0) {
+                message = "All data is already synchronized!";
+            }
+            
+            Alert.alert("Sync Complete", message, [{ text: "OK" }]);
+            
+            await loadTransactions();
+            return syncResult;
+        } catch (error) {
+            console.error('Error performing full sync:', error);
+            Alert.alert("Sync Failed", "Failed to synchronize data with cloud");
+            return { transactionsSynced: 0, goalsSynced: 0, newTransactions: 0, newGoals: 0 };
+        }
+    };
+
     const checkBackendStatus = async () => {
         try {
             const isAvailable = await backendService.healthCheck();
             setBackendAvailable(isAvailable && isAuthenticated);
+            
+            // If backend is available and user is authenticated, sync from backend
+            if (isAvailable && isAuthenticated) {
+                await syncFromBackend();
+            }
         } catch (error) {
             setBackendAvailable(false);
         }
@@ -126,6 +181,8 @@ export const useTransactions = () => {
         deleteTransaction: removeTransaction,
         refreshTransactions: loadTransactions,
         syncPendingTransactions: syncAllPending,
+        syncFromBackend, // NEW
+        performFullDataSync, // NEW
         backendAvailable,
         clearTransactions, // For development only
     };

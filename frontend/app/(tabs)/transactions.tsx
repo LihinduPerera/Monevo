@@ -15,7 +15,7 @@ export default function TransactionScreen() {
     addTransaction, 
     deleteTransaction, 
     refreshTransactions,
-    syncPendingTransactions,
+    performFullDataSync, // Updated to use full sync
     backendAvailable 
   } = useTransactions();
   
@@ -28,7 +28,7 @@ export default function TransactionScreen() {
   }, [isAuthenticated, appReady]);
 
   const handleSync = async () => {
-    await syncPendingTransactions();
+    await performFullDataSync(); // Updated to use full sync
   };
 
   // Show loading while checking authentication
@@ -69,9 +69,9 @@ export default function TransactionScreen() {
           onPress={handleSync}
           className="rounded-2xl mt-32 p-4 mb-6 flex-row justify-center items-center border bg-purple-500/20 border-purple-500/50"
         >
-          <Ionicons name="cloud-upload-outline" size={24} color="#ffffff" />
+          {/* <Ionicons name="cloud-sync-outline" size={24} color="#ffffff" /> */}
           <Text className="text-white text-center font-semibold text-lg ml-2">
-            Sync Pending Transactions
+            Sync All Data
           </Text>
         </TouchableOpacity>
 

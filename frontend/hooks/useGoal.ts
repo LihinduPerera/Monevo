@@ -7,7 +7,8 @@ import {
     Goal, 
     addGoalWithSync, 
     syncPendingGoals,
-    clearUserGoals 
+    clearUserGoals,
+    syncGoalsFromBackend
 } from "../services/database";
 import { backendService } from "../services/backend";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,10 +88,35 @@ export const useGoals = () => {
         }
     };
 
+    // NEW: Sync from backend to local
+    const syncFromBackend = async () => {
+        try {
+            const newGoalsCount = await syncGoalsFromBackend();
+            if (newGoalsCount > 0) {
+                Alert.alert(
+                    "Sync Complete", 
+                    `Downloaded ${newGoalsCount} new goals from cloud!`,
+                    [{ text: "OK" }]
+                );
+            }
+            await loadGoals();
+            return newGoalsCount;
+        } catch (error) {
+            console.error('Error syncing from backend:', error);
+            Alert.alert("Sync Failed", "Failed to download goals from cloud");
+            return 0;
+        }
+    };
+
     const checkBackendStatus = async () => {
         try {
             const isAvailable = await backendService.healthCheck();
             setBackendAvailable(isAvailable && isAuthenticated);
+            
+            // If backend is available and user is authenticated, sync from backend
+            if (isAvailable && isAuthenticated) {
+                await syncFromBackend();
+            }
         } catch (error) {
             setBackendAvailable(false);
         }
@@ -119,6 +145,7 @@ export const useGoals = () => {
         deleteGoal: removeGoal,
         refreshGoals: loadGoals,
         syncPendingGoals: syncAllPending,
+        syncFromBackend, // NEW
         backendAvailable,
         clearGoals, // For development only
     };
