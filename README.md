@@ -25,6 +25,7 @@ It features a **highly animated, custom glass-effect UI** in the frontend and a 
 - 💾 **Local SQLite database** and **AsyncStorage** support for offline usage
 - 🌐 **RESTful API** backend with **Express.js** and **Oracle database**
 - ⚡ Smooth, interactive animations for a premium user experience
+- ⚠️ **Note: The expo-blur effect used for the glass-effect UI works only on iOS devices. On Android, the UI and blur effects may not render correctly, and there might be layout and ui issues.**
 
 ---
 

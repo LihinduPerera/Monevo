@@ -278,6 +278,49 @@ export const syncPendingTransactions = async (): Promise<number> => {
     }
 }
 
+// NEW: Fetch transactions from backend and sync to local
+export const syncTransactionsFromBackend = async (): Promise<number> => {
+    const userId = await getCurrentUserId();
+    if (!userId) return 0;
+
+    try {
+        const backendTransactions = await backendService.getTransactions();
+        let newTransactionsCount = 0;
+
+        for (const backendTransaction of backendTransactions) {
+            // Check if transaction already exists in local db by backend_id
+            const existingTransactions = db.getAllSync(
+                'SELECT * FROM transactions WHERE backend_id = ? AND user_id = ?',
+                [backendTransaction.id!, userId]
+            ) as Transaction[];
+
+            if (existingTransactions.length === 0) {
+                // Insert the transaction from backend
+                db.runSync(
+                    `INSERT INTO transactions (amount, desc, type, category, date, synced, backend_id, user_id) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        backendTransaction.amount,
+                        backendTransaction.desc,
+                        backendTransaction.type,
+                        backendTransaction.category,
+                        backendTransaction.date,
+                        1, // Already synced since it's from backend
+                        backendTransaction.id!,
+                        userId
+                    ]
+                );
+                newTransactionsCount++;
+            }
+        }
+
+        return newTransactionsCount;
+    } catch (error) {
+        console.error('Error syncing transactions from backend:', error);
+        return 0;
+    }
+}
+
 // Goal functions
 export const addGoal = async (goal: Omit<Goal, 'id'>): Promise<number> => {
     const { target_amount, target_month, target_year } = goal;
@@ -435,6 +478,76 @@ export const syncPendingGoals = async (): Promise<number> => {
     } catch (error) {
         console.error('Error syncing pending goals:', error);
         return 0;
+    }
+}
+
+// NEW: Fetch goals from backend and sync to local
+export const syncGoalsFromBackend = async (): Promise<number> => {
+    const userId = await getCurrentUserId();
+    if (!userId) return 0;
+
+    try {
+        const backendGoals = await backendService.getGoals();
+        let newGoalsCount = 0;
+
+        for (const backendGoal of backendGoals) {
+            // Check if goal already exists in local db by backend_id
+            const existingGoals = db.getAllSync(
+                'SELECT * FROM goals WHERE backend_id = ? AND user_id = ?',
+                [backendGoal.id!, userId]
+            ) as Goal[];
+
+            if (existingGoals.length === 0) {
+                // Insert the goal from backend
+                db.runSync(
+                    `INSERT INTO goals (target_amount, target_month, target_year, synced, backend_id, user_id, created_at) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        backendGoal.target_amount,
+                        backendGoal.target_month,
+                        backendGoal.target_year,
+                        1, // Already synced since it's from backend
+                        backendGoal.id!,
+                        userId,
+                        backendGoal.created_at || new Date().toISOString()
+                    ]
+                );
+                newGoalsCount++;
+            }
+        }
+
+        return newGoalsCount;
+    } catch (error) {
+        console.error('Error syncing goals from backend:', error);
+        return 0;
+    }
+}
+
+// NEW: Full sync function that does both directions
+export const performFullSync = async (): Promise<{ transactionsSynced: number, goalsSynced: number, newTransactions: number, newGoals: number }> => {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+        return { transactionsSynced: 0, goalsSynced: 0, newTransactions: 0, newGoals: 0 };
+    }
+
+    try {
+        // Sync pending local data to backend
+        const transactionsSynced = await syncPendingTransactions();
+        const goalsSynced = await syncPendingGoals();
+
+        // Sync from backend to local
+        const newTransactions = await syncTransactionsFromBackend();
+        const newGoals = await syncGoalsFromBackend();
+
+        return {
+            transactionsSynced,
+            goalsSynced,
+            newTransactions,
+            newGoals
+        };
+    } catch (error) {
+        console.error('Error performing full sync:', error);
+        return { transactionsSynced: 0, goalsSynced: 0, newTransactions: 0, newGoals: 0 };
     }
 }
 
