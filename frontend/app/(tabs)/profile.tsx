@@ -9,6 +9,7 @@ import { useGoals } from '@/hooks/useGoal';
 import { useTransactions } from '@/hooks/useTransaction';
 import { formatCurrency, getMonthName } from '@/utils/helpers';
 import { reportService } from '@/services/reportService';
+import * as Haptics from 'expo-haptics';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -114,23 +115,52 @@ export default function ProfileScreen() {
     };
   }, []);
 
+  // Updated logout function with confirmation and haptic feedback
   const handleLogout = async () => {
-    await logout();
-    router.replace('/landing');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact for logout attempt
+    
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { 
+          text: 'No', 
+          style: 'cancel',
+          onPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) // Light impact on cancel
+        },
+        {
+          text: 'Yes',
+          style: 'destructive',
+          onPress: async () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Success haptic for logout
+            await logout();
+            router.replace('/landing');
+          },
+        },
+      ]
+    );
   };
 
+  // Haptic feedback for clear data
   const handleClearData = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); // Heavy impact for destructive action
     Alert.alert(
       'Clear All Data',
       'This will delete all your transactions and goals. This action cannot be undone.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) // Light impact on cancel
+        },
         {
           text: 'Clear All',
           style: 'destructive',
           onPress: async () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); // Warning for destructive action
             await clearTransactions();
             await clearGoals();
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Success when done
             Alert.alert('Success', 'All data has been cleared');
           },
         },
@@ -138,9 +168,11 @@ export default function ProfileScreen() {
     );
   };
 
+  // Haptic feedback for report generation
   const handleGenerateReport = async () => {
     if (generatingReport) return;
     
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact for starting generation
     setGeneratingReport(true);
     try {
       let pdfUri: string;
@@ -152,12 +184,50 @@ export default function ProfileScreen() {
       }
       
       await reportService.sharePDF(pdfUri);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Success haptic
       setShowReportModal(false);
     } catch (error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); // Error haptic
       Alert.alert('Error', 'Failed to generate report. Please try again.');
     } finally {
       setGeneratingReport(false);
     }
+  };
+
+  // Haptic feedback for opening report modal
+  const handleOpenReportModal = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for opening modal
+    setShowReportModal(true);
+  };
+
+  // Haptic feedback for report type selection
+  const handleReportTypeChange = (type: 'monthly' | 'yearly') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for selection
+    setSelectedReportType(type);
+  };
+
+  // Haptic feedback for month selection
+  const handleMonthSelect = (month: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for selection
+    setSelectedMonth(month);
+  };
+
+  // Haptic feedback for year selection
+  const handleYearSelect = (year: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for selection
+    setSelectedYear(year);
+  };
+
+  // Haptic feedback for navigation
+  const handleNavigate = (route: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for navigation
+    router.push(route as any);
+  };
+
+  // Haptic feedback for closing modal
+  const handleCloseModal = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for closing
+    setShowReportModal(false);
   };
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -370,7 +440,10 @@ export default function ProfileScreen() {
                       ))}
 
                       {goals.length > 3 && (
-                        <TouchableOpacity className="items-center py-2" onPress={() => router.push('/(tabs)')}>
+                        <TouchableOpacity 
+                          className="items-center py-2" 
+                          onPress={() => handleNavigate('/(tabs)')}
+                        >
                           <Text className="text-purple-400 text-sm font-medium">
                             View all {goals.length} goals
                           </Text>
@@ -396,7 +469,7 @@ export default function ProfileScreen() {
           {/* Actions (glass-like buttons matching new UI) */}
           <View className="space-y-4 mb-8">
             <TouchableOpacity
-              onPress={() => setShowReportModal(true)}
+              onPress={handleOpenReportModal}
               className="bg-green-500/20 border border-green-500/50 rounded-2xl p-4 flex-row items-center mb-3"
             >
               <Ionicons name="document-text-outline" size={24} color="#10b981" />
@@ -407,7 +480,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push('/(tabs)/transactions')}
+              onPress={() => handleNavigate('/(tabs)/transactions')}
               className="bg-purple-500/20 border border-purple-500/50 rounded-2xl p-4 flex-row items-center mb-3"
             >
               <Ionicons name="card-outline" size={24} color="#8b5cf6" />
@@ -418,7 +491,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push('/(tabs)')}
+              onPress={() => handleNavigate('/(tabs)')}
               className="bg-blue-500/20 border border-blue-500/50 rounded-2xl p-4 flex-row items-center"
             >
               <Ionicons name="trophy-outline" size={24} color="#60a5fa" />
@@ -472,7 +545,7 @@ export default function ProfileScreen() {
         visible={showReportModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowReportModal(false)}
+        onRequestClose={handleCloseModal}
       >
         <View className="flex-1 bg-black/70 justify-center p-6">
           <BlurView intensity={50} className="rounded-3xl overflow-hidden border border-cyan-500/20">
@@ -485,7 +558,7 @@ export default function ProfileScreen() {
               <View className="p-6">
                 <View className="flex-row justify-between items-center mb-6">
                   <Text className="text-2xl font-bold text-white">Generate Report</Text>
-                  <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                  <TouchableOpacity onPress={handleCloseModal}>
                     <Ionicons name="close" size={24} color="#6b7280" />
                   </TouchableOpacity>
                 </View>
@@ -496,7 +569,7 @@ export default function ProfileScreen() {
                     className={`flex-1 py-4 flex-row justify-center items-center ${
                       selectedReportType === 'monthly' ? 'bg-purple-500/20' : 'bg-[#0f0f23]/80'
                     }`}
-                    onPress={() => setSelectedReportType('monthly')}
+                    onPress={() => handleReportTypeChange('monthly')}
                   >
                     <Ionicons 
                       name="calendar" 
@@ -513,7 +586,7 @@ export default function ProfileScreen() {
                     className={`flex-1 py-4 flex-row justify-center items-center ${
                       selectedReportType === 'yearly' ? 'bg-purple-500/20' : 'bg-[#0f0f23]/80'
                     }`}
-                    onPress={() => setSelectedReportType('yearly')}
+                    onPress={() => handleReportTypeChange('yearly')}
                   >
                     <Ionicons 
                       name="stats-chart" 
@@ -542,7 +615,7 @@ export default function ProfileScreen() {
                                 ? 'bg-purple-500/20 border-purple-500/50'
                                 : 'bg-[#0f0f23]/80 border-purple-900/30'
                             }`}
-                            onPress={() => setSelectedMonth(month)}
+                            onPress={() => handleMonthSelect(month)}
                           >
                             <Text className={`font-medium ${
                               selectedMonth === month ? 'text-purple-400' : 'text-gray-400'
@@ -569,7 +642,7 @@ export default function ProfileScreen() {
                               ? 'bg-purple-500/20 border-purple-500/50'
                               : 'bg-[#0f0f23]/80 border-purple-900/30'
                           }`}
-                          onPress={() => setSelectedYear(year)}
+                          onPress={() => handleYearSelect(year)}
                         >
                           <Text className={`font-medium ${
                             selectedYear === year ? 'text-purple-400' : 'text-gray-400'
@@ -604,7 +677,7 @@ export default function ProfileScreen() {
                 <View className="flex-row space-x-4">
                   <TouchableOpacity
                     className="flex-1 rounded-2xl p-4 border border-gray-500/50 backdrop-blur-lg"
-                    onPress={() => setShowReportModal(false)}
+                    onPress={handleCloseModal}
                   >
                     <Text className="text-gray-300 text-center font-bold text-lg">
                       Cancel

@@ -1,6 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_BASE_URL = 'http://192.168.8.155:3000/api';
+const API_BASE_URL = "http://192.168.8.155:3000/api";
 
 export interface BackendTransaction {
   id?: number;
@@ -77,50 +77,59 @@ class BackendService {
 
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
 
+    // Create a Headers object from any incoming headers
+    const headersObj = new Headers(options.headers as HeadersInit);
+
+    // Ensure content-type is set (only set if not already present)
+    if (!headersObj.has("Content-Type")) {
+      headersObj.set("Content-Type", "application/json");
+    }
+
+    // Add Authorization if token exists
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+      headersObj.set("Authorization", `Bearer ${this.token}`);
     }
 
     const config: RequestInit = {
       ...options,
-      headers,
+      headers: headersObj,
     };
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         if (response.status === 401) {
-          await AsyncStorage.removeItem('auth_token');
-          await AsyncStorage.removeItem('user_data');
-          throw new Error('Invalid token');
+          await AsyncStorage.removeItem("auth_token");
+          await AsyncStorage.removeItem("user_data");
+          throw new Error("Invalid token");
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || 'Request failed');
+      // Some endpoints might return no JSON (avoid crashing)
+      const text = await response.text();
+      const result = text ? JSON.parse(text) : {};
+
+      if (result && result.success === false) {
+        throw new Error(result.message || "Request failed");
       }
 
       return result;
     } catch (error) {
-      console.error('API request error:', error);
+      console.error("API request error:", error);
       throw error;
     }
   }
 
   // Auth methods
-  async login(email: string, password: string): Promise<{ user: User; token: string }> {
-    const result = await this.request('/auth/login', {
-      method: 'POST',
+  async login(
+    email: string,
+    password: string
+  ): Promise<{ user: User; token: string }> {
+    const result = await this.request("/auth/login", {
+      method: "POST",
       body: JSON.stringify({ email, password }),
     });
 
@@ -130,9 +139,14 @@ class BackendService {
     };
   }
 
-  async register(name: string, email: string, password: string, date_of_birth: string): Promise<any> {
-    const result = await this.request('/auth/register', {
-      method: 'POST',
+  async register(
+    name: string,
+    email: string,
+    password: string,
+    date_of_birth: string
+  ): Promise<any> {
+    const result = await this.request("/auth/register", {
+      method: "POST",
       body: JSON.stringify({ name, email, password, date_of_birth }),
     });
 
@@ -140,14 +154,14 @@ class BackendService {
   }
 
   async getProfile(): Promise<User> {
-    const result = await this.request('/auth/profile');
+    const result = await this.request("/auth/profile");
     return result.data;
   }
 
   // Transaction methods
-  async addTransaction(transaction: Omit<BackendTransaction, 'id'>) {
-    const result = await this.request('/transactions', {
-      method: 'POST',
+  async addTransaction(transaction: Omit<BackendTransaction, "id">) {
+    const result = await this.request("/transactions", {
+      method: "POST",
       body: JSON.stringify(transaction),
     });
 
@@ -155,26 +169,32 @@ class BackendService {
   }
 
   async getTransactions(): Promise<BackendTransaction[]> {
-    const result = await this.request('/transactions');
+    const result = await this.request("/transactions");
     return result.data;
   }
 
-  async getTransactionsByMonth(month: number, year: number): Promise<BackendTransaction[]> {
+  async getTransactionsByMonth(
+    month: number,
+    year: number
+  ): Promise<BackendTransaction[]> {
     const result = await this.request(`/transactions/month/${month}/${year}`);
     return result.data;
   }
 
   async deleteTransaction(id: number) {
     const result = await this.request(`/transactions/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
 
     return result;
   }
 
-  async updateTransaction(id: number, transaction: Omit<BackendTransaction, 'id'>) {
+  async updateTransaction(
+    id: number,
+    transaction: Omit<BackendTransaction, "id">
+  ) {
     const result = await this.request(`/transactions/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(transaction),
     });
 
@@ -182,9 +202,9 @@ class BackendService {
   }
 
   // Goal methods
-  async addGoal(goal: Omit<Goal, 'id'>) {
-    const result = await this.request('/goals', {
-      method: 'POST',
+  async addGoal(goal: Omit<Goal, "id">) {
+    const result = await this.request("/goals", {
+      method: "POST",
       body: JSON.stringify(goal),
     });
 
@@ -192,7 +212,7 @@ class BackendService {
   }
 
   async getGoals(): Promise<Goal[]> {
-    const result = await this.request('/goals');
+    const result = await this.request("/goals");
     return result.data;
   }
 
@@ -203,15 +223,15 @@ class BackendService {
 
   async deleteGoal(id: number) {
     const result = await this.request(`/goals/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
 
     return result;
   }
 
-  async updateGoal(id: number, goal: Omit<Goal, 'id'>) {
+  async updateGoal(id: number, goal: Omit<Goal, "id">) {
     const result = await this.request(`/goals/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(goal),
     });
 
@@ -227,25 +247,27 @@ class BackendService {
     }
   }
 
-    async generateReport(month?: number, year?: number): Promise<ReportData> {
+  async generateReport(month?: number, year?: number): Promise<ReportData> {
     const params = new URLSearchParams();
-    if (month) params.append('month', month.toString());
-    if (year) params.append('year', year.toString());
-    
+    if (month) params.append("month", month.toString());
+    if (year) params.append("year", year.toString());
+
     const queryString = params.toString();
-    const endpoint = queryString ? `/report?${queryString}` : '/report';
-    
+    const endpoint = queryString ? `/report?${queryString}` : "/report";
+
     const result = await this.request(endpoint);
     return result.data;
   }
 
   async generateYearlyReport(year?: number): Promise<YearlyReportData> {
     const params = new URLSearchParams();
-    if (year) params.append('year', year.toString());
-    
+    if (year) params.append("year", year.toString());
+
     const queryString = params.toString();
-    const endpoint = queryString ? `/report/yearly?${queryString}` : '/report/yearly';
-    
+    const endpoint = queryString
+      ? `/report/yearly?${queryString}`
+      : "/report/yearly";
+
     const result = await this.request(endpoint);
     return result.data;
   }

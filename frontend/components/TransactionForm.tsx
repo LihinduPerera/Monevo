@@ -7,6 +7,7 @@ import { Kaede } from 'react-native-textinput-effects';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Haptics from 'expo-haptics';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -112,9 +113,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
   };
 
   const handleSubmit = async () => {
-    if (!amount || !description || !category) return Alert.alert('Error', 'Please fill all fields');
+    if (!amount || !description || !category) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); // Error haptic
+      return Alert.alert('Error', 'Please fill all fields');
+    }
+    
     const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) return Alert.alert('Error', 'Please enter a valid amount');
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); // Error haptic
+      return Alert.alert('Error', 'Please enter a valid amount');
+    }
 
     const transactionData: Omit<Transaction, 'id'> = {
       amount: parsedAmount,
@@ -127,15 +135,35 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
     setLoading(true);
     try {
       await onSubmit(transactionData);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Success haptic
       setAmount('');
       setDescription('');
       setCategory('');
       setSelectedDate(new Date()); // Reset to current date
     } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); // Error haptic
       Alert.alert('Error', 'Failed to add transaction');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Haptic feedback for type selection
+  const handleTypeChange = (newType: 'income' | 'expense') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for selection
+    setType(newType);
+  };
+
+  // Haptic feedback for category selection
+  const handleCategorySelect = (selectedCategory: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for selection
+    setCategory(selectedCategory);
+  };
+
+  // Haptic feedback for date picker
+  const handleDatePickerPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact for opening date picker
+    setShowDatePicker(true);
   };
 
   const getAlertConfig = () => {
@@ -244,7 +272,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
               className={`flex-1 py-4 flex-row justify-center items-center ${
                 type === 'expense' ? 'bg-red-500/20' : 'bg-[#0f0f23]/80'
               }`}
-              onPress={() => setType('expense')}
+              onPress={() => handleTypeChange('expense')} // Updated with haptic
             >
               <Ionicons name="arrow-down" size={20} color={type === 'expense' ? '#ef4444' : '#6b7280'} />
               <Text className={`ml-2 font-semibold text-base ${type === 'expense' ? 'text-red-400' : 'text-gray-500'}`}>
@@ -255,7 +283,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
               className={`flex-1 py-4 flex-row justify-center items-center ${
                 type === 'income' ? 'bg-green-500/20' : 'bg-[#0f0f23]/80'
               }`}
-              onPress={() => setType('income')}
+              onPress={() => handleTypeChange('income')} // Updated with haptic
             >
               <Ionicons name="arrow-up" size={20} color={type === 'income' ? '#10b981' : '#6b7280'} />
               <Text className={`ml-2 font-semibold text-base ${type === 'income' ? 'text-green-400' : 'text-gray-500'}`}>
@@ -269,7 +297,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
             <Text className="font-semibold mb-3 text-white text-lg ml-1">Transaction Date</Text>
             <TouchableOpacity
               className="rounded-2xl overflow-hidden border border-purple-900/30 backdrop-blur-lg shadow-lg"
-              onPress={() => setShowDatePicker(true)}
+              onPress={handleDatePickerPress} // Updated with haptic
             >
               <View className="bg-[#0f0f23]/80 p-4 flex-row justify-between items-center">
                 <Text className="text-white text-base">
@@ -331,7 +359,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onSubmit, backendAvai
                       : 'bg-red-500/20 border-red-500/50'
                     : 'bg-[#0f0f23]/80 border-purple-900/30'
                 } shadow-lg`}
-                onPress={() => setCategory(cat)}
+                onPress={() => handleCategorySelect(cat)} // Updated with haptic
               >
                 <Text
                   className={`text-sm font-medium ${

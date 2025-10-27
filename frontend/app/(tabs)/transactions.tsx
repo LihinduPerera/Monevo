@@ -6,7 +6,7 @@ import TransactionList from '@/components/TransactionList';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
 import CustomHeader from '@/components/CustomHeader';
-import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics'; // Added expo-haptics import
 
 export default function TransactionScreen() {
   const { 
@@ -27,8 +27,35 @@ export default function TransactionScreen() {
     }
   }, [isAuthenticated, appReady]);
 
+  // Haptic feedback for sync
   const handleSync = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact for sync
     await performFullDataSync(); // Updated to use full sync
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Success when sync completes
+  };
+
+  // Haptic feedback for refresh
+  const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for refresh
+    refreshTransactions();
+  };
+
+  // Haptic feedback for delete transaction
+  const handleDeleteTransaction = (id: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact for delete
+    deleteTransaction(id);
+  };
+
+  // Haptic feedback for add transaction (passed to TransactionForm)
+  const handleAddTransaction = async (transaction: any) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact before adding
+    try {
+      await addTransaction(transaction);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Success when added
+    } catch (error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); // Error if failed
+      throw error; // Re-throw to let TransactionForm handle the error
+    }
   };
 
   // Show loading while checking authentication
@@ -58,7 +85,7 @@ export default function TransactionScreen() {
         refreshControl={
           <RefreshControl 
             refreshing={loading} 
-            onRefresh={refreshTransactions}
+            onRefresh={handleRefresh}
             tintColor="#8b5cf6"
             colors={['#8b5cf6']}
           />
@@ -76,7 +103,7 @@ export default function TransactionScreen() {
         </TouchableOpacity>
 
         <TransactionForm 
-          onSubmit={addTransaction} 
+          onSubmit={handleAddTransaction}
           backendAvailable={backendAvailable} 
         />
         

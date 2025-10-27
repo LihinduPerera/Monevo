@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, RefreshControl, Alert, TouchableOpacity } from 'react-native';
-import SummaryCard from '@/components/SummaryCard';
 import TransactionList from '@/components/TransactionList';
 import { useTransactions } from '@/hooks/useTransaction';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +10,8 @@ import GoalForm from '@/components/GoalForm';
 import { useGoals } from '@/hooks/useGoal';
 import { Ionicons } from '@expo/vector-icons';
 import { getTransactionsByMonth } from '@/services/database';
-import { formatCurrency } from '@/utils/helpers';
+import * as Haptics from 'expo-haptics'; // Added expo-haptics import
+
 
 export default function HomeScreen() {
   const { transactions, loading, deleteTransaction, refreshTransactions, performFullDataSync } = useTransactions();
@@ -44,28 +44,89 @@ export default function HomeScreen() {
     }
   };
 
+  // Haptic feedback for delete transaction
   const handleDelete = async (id: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact for delete attempt
+    
     Alert.alert(
       'Delete Transaction',
       'Are you sure you want to delete this transaction?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) // Light impact on cancel
+        },
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteTransaction(id),
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); // Warning for delete
+            deleteTransaction(id);
+          },
         },
       ]
     );
   };
 
+  // Haptic feedback for sync
   const handleSync = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact for sync
     await performFullDataSync(); // Updated to use full sync
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Success when sync completes
   };
 
+  // Haptic feedback for adding goal
   const handleAddGoal = async (goalData: any) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Success when goal is added
     await addGoal(goalData);
     setShowGoalForm(false);
+  };
+
+  // Haptic feedback for month navigation
+  const handlePreviousMonth = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for navigation
+    if (selectedMonth > 1) {
+      setSelectedMonth(selectedMonth - 1);
+    } else {
+      setSelectedMonth(12);
+      setSelectedYear(selectedYear - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for navigation
+    if (selectedMonth < 12) {
+      setSelectedMonth(selectedMonth + 1);
+    } else {
+      setSelectedMonth(1);
+      setSelectedYear(selectedYear + 1);
+    }
+  };
+
+  // Haptic feedback for opening goal form
+  const handleOpenGoalForm = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Medium impact for opening form
+    setShowGoalForm(true);
+  };
+
+  // Haptic feedback for closing goal form
+  const handleCloseGoalForm = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for closing form
+    setShowGoalForm(false);
+  };
+
+  // Haptic feedback for refresh
+  const handleRefresh = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); // Light impact for refresh
+    refreshTransactions();
+    refreshGoals();
+  };
+
+  // Haptic feedback for delete goal
+  const handleDeleteGoal = (goalId: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy); // Heavy impact for destructive action
+    deleteGoal(goalId);
   };
 
   const currentGoal = goals.find(
@@ -110,10 +171,7 @@ export default function HomeScreen() {
         refreshControl={
           <RefreshControl 
             refreshing={loading} 
-            onRefresh={() => {
-              refreshTransactions();
-              refreshGoals();
-            }}
+            onRefresh={handleRefresh}
             tintColor="#8b5cf6"
             colors={['#8b5cf6']}
           />
@@ -131,27 +189,13 @@ export default function HomeScreen() {
           </Text>
           <View className="flex-row space-x-2">
             <TouchableOpacity
-              onPress={() => {
-                if (selectedMonth > 1) {
-                  setSelectedMonth(selectedMonth - 1);
-                } else {
-                  setSelectedMonth(12);
-                  setSelectedYear(selectedYear - 1);
-                }
-              }}
+              onPress={handlePreviousMonth}
               className="p-2"
             >
               <Ionicons name="chevron-back" size={24} color="#8b5cf6" />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => {
-                if (selectedMonth < 12) {
-                  setSelectedMonth(selectedMonth + 1);
-                } else {
-                  setSelectedMonth(1);
-                  setSelectedYear(selectedYear + 1);
-                }
-              }}
+              onPress={handleNextMonth}
               className="p-2"
             >
               <Ionicons name="chevron-forward" size={24} color="#8b5cf6" />
@@ -176,12 +220,12 @@ export default function HomeScreen() {
             goal={currentGoal}
             currentIncome={monthIncome}
             currentExpenses={monthExpenses}
-            onEditGoal={() => setShowGoalForm(true)}
-            onDeleteGoal={() => deleteGoal(currentGoal.id!)}
+            onEditGoal={handleOpenGoalForm}
+            onDeleteGoal={() => handleDeleteGoal(currentGoal.id!)}
           />
         ) : (
           <TouchableOpacity
-            onPress={() => setShowGoalForm(true)}
+            onPress={handleOpenGoalForm}
             className="bg-purple-500/20 border border-purple-500/50 rounded-2xl p-6 mb-6 items-center"
           >
             <Ionicons name="trophy-outline" size={32} color="#8b5cf6" />
@@ -196,11 +240,11 @@ export default function HomeScreen() {
 
         {/* Goal Form Modal */}
         {showGoalForm && (
-          <View className="absolute inset-0 bg-black/70 z-50 justify-center p-4">
+          <View className="absolute inset-0 bg-black/70 z-50 justify-start pt-20 p-4">
             <GoalForm
               onSubmit={handleAddGoal}
               existingGoal={currentGoal}
-              onCancel={() => setShowGoalForm(false)}
+              onCancel={handleCloseGoalForm}
             />
           </View>
         )}
