@@ -29,8 +29,21 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
 
   const netIncome = currentIncome - currentExpenses;
   const progressPercentage = Math.min((netIncome / goal.target_amount) * 100, 100);
-  const isAchieved = netIncome >= goal.target_amount;
+  
+  // Check if the goal month has ended
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+  
+  const isMonthEnded = currentYear > goal.target_year || 
+    (currentYear === goal.target_year && currentMonth > goal.target_month);
+  
+  // Goal is only achieved if the month has ended AND net income meets/exceeds target
+  const isAchieved = isMonthEnded && netIncome >= goal.target_amount;
   const remainingAmount = Math.max(goal.target_amount - netIncome, 0);
+
+  // Check if we're in the goal month (for progress display)
+  const isCurrentMonth = currentYear === goal.target_year && currentMonth === goal.target_month;
 
   useEffect(() => {
     // Progress animation
@@ -79,6 +92,53 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  const getStatusMessage = () => {
+    if (isAchieved) {
+      return `You exceeded your goal by ${formatCurrency(netIncome - goal.target_amount)}!`;
+    } else if (isMonthEnded) {
+      return `You didn't reach your goal. You needed ${formatCurrency(remainingAmount)} more.`;
+    } else if (isCurrentMonth) {
+      return `${formatCurrency(remainingAmount)} more to reach your goal this month`;
+    } else {
+      return `Goal for ${monthNames[goal.target_month - 1]} ${goal.target_year} - ${formatCurrency(remainingAmount)} remaining`;
+    }
+  };
+
+  const getStatusTitle = () => {
+    if (isAchieved) {
+      return '🎉 Goal Achieved!';
+    } else if (isMonthEnded) {
+      return 'Goal Not Met';
+    } else if (isCurrentMonth) {
+      return 'Keep Going!';
+    } else {
+      return 'Upcoming Goal';
+    }
+  };
+
+  const getStatusColor = () => {
+    if (isAchieved) {
+      return { bg: 'bg-green-500/20', border: 'border-green-500/50', text: 'text-green-400' };
+    } else if (isMonthEnded) {
+      return { bg: 'bg-rose-500/20', border: 'border-rose-500/50', text: 'text-rose-400' };
+    } else {
+      return { bg: 'bg-purple-500/20', border: 'border-purple-500/50', text: 'text-purple-400' };
+    }
+  };
+
+  const getStatusIcon = () => {
+    if (isAchieved) {
+      return { name: 'trophy' as const, color: '#10b981' };
+    } else if (isMonthEnded) {
+      return { name: 'alert-circle' as const, color: '#ef4444' };
+    } else {
+      return { name: 'trending-up' as const, color: '#8b5cf6' };
+    }
+  };
+
+  const statusColors = getStatusColor();
+  const statusIcon = getStatusIcon();
+
   return (
     <View className="mb-6 overflow-hidden rounded-3xl border border-cyan-500/20 shadow-2xl shadow-cyan-500/10">
       <LinearGradient
@@ -98,6 +158,21 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
                 <Text className="text-gray-400 text-sm">
                   Target: {formatCurrency(goal.target_amount)}
                 </Text>
+                {!isMonthEnded && isCurrentMonth && (
+                  <Text className="text-cyan-400 text-xs mt-1">
+                    Current month • Ends in {new Date(currentYear, currentMonth, 0).getDate() - currentDate.getDate()} days
+                  </Text>
+                )}
+                {!isMonthEnded && !isCurrentMonth && (
+                  <Text className="text-yellow-400 text-xs mt-1">
+                    Upcoming goal
+                  </Text>
+                )}
+                {isMonthEnded && (
+                  <Text className="text-gray-400 text-xs mt-1">
+                    Month completed
+                  </Text>
+                )}
               </View>
               
               <View className="flex-row space-x-2">
@@ -119,7 +194,8 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
                       inputRange: [0, 100],
                       outputRange: ['0%', '100%'],
                     }),
-                    backgroundColor: isAchieved ? '#10b981' : '#8b5cf6',
+                    backgroundColor: isAchieved ? '#10b981' : 
+                                    isMonthEnded ? '#ef4444' : '#8b5cf6',
                   }}
                   className="h-full rounded-full"
                 />
@@ -136,31 +212,22 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
 
             {/* Status */}
             <Animated.View 
-              style={{ transform: [{ scale: pulseAnim }] }}
-              className={`rounded-2xl p-4 border ${
-                isAchieved 
-                  ? 'bg-green-500/20 border-green-500/50' 
-                  : 'bg-purple-500/20 border-purple-500/50'
-              }`}
+              style={{ transform: [{ scale: isAchieved ? pulseAnim : 1 }] }}
+              className={`rounded-2xl p-4 border ${statusColors.bg} ${statusColors.border}`}
             >
               <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className={`text-lg font-bold ${
-                    isAchieved ? 'text-green-400' : 'text-purple-400'
-                  }`}>
-                    {isAchieved ? '🎉 Goal Achieved!' : 'Keep Going!'}
+                <View className="flex-1">
+                  <Text className={`text-lg font-bold ${statusColors.text}`}>
+                    {getStatusTitle()}
                   </Text>
                   <Text className="text-gray-300 text-sm mt-1">
-                    {isAchieved 
-                      ? `You exceeded your goal by ${formatCurrency(netIncome - goal.target_amount)}!`
-                      : `${formatCurrency(remainingAmount)} more to reach your goal`
-                    }
+                    {getStatusMessage()}
                   </Text>
                 </View>
                 <Ionicons 
-                  name={isAchieved ? "trophy" : "trending-up"} 
+                  name={statusIcon.name} 
                   size={32} 
-                  color={isAchieved ? '#10b981' : '#8b5cf6'} 
+                  color={statusIcon.color} 
                 />
               </View>
             </Animated.View>
@@ -191,21 +258,21 @@ const GoalProgress: React.FC<GoalProgressProps> = ({
 
             {/* Sync Status */}
             {isAuthenticated && !!goal.synced && (
-  <View className="flex-row items-center mt-3 justify-center">
-    <Ionicons name="cloud-done" size={16} color="#10b981" />
-    <Text className="text-green-400 text-sm ml-2">
-      Synced with cloud
-    </Text>
-  </View>
-)}
-{isAuthenticated && !goal.synced && (
-  <View className="flex-row items-center mt-3 justify-center">
-    <Ionicons name="cloud-offline" size={16} color="#f59e0b" />
-    <Text className="text-yellow-400 text-sm ml-2">
-      Local only - Sync pending
-    </Text>
-  </View>
-)}
+              <View className="flex-row items-center mt-3 justify-center">
+                <Ionicons name="cloud-done" size={16} color="#10b981" />
+                <Text className="text-green-400 text-sm ml-2">
+                  Synced with cloud
+                </Text>
+              </View>
+            )}
+            {isAuthenticated && !goal.synced && (
+              <View className="flex-row items-center mt-3 justify-center">
+                <Ionicons name="cloud-offline" size={16} color="#f59e0b" />
+                <Text className="text-yellow-400 text-sm ml-2">
+                  Local only - Sync pending
+                </Text>
+              </View>
+            )}
           </View>
         </BlurView>
       </LinearGradient>
