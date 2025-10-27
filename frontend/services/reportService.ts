@@ -154,49 +154,6 @@ class ReportService {
             color: #1f2937;
             font-size: 18px;
           }
-          .chart {
-            display: flex;
-            align-items: flex-end;
-            height: 200px;
-            gap: 8px;
-            border-bottom: 2px solid #e5e7eb;
-            border-left: 2px solid #e5e7eb;
-            padding: 15px;
-            position: relative;
-          }
-          .chart-bar {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            position: relative;
-          }
-          .bar-income {
-            background: #10b981;
-            width: 80%;
-            border-radius: 4px 4px 0 0;
-            min-height: 2px;
-          }
-          .bar-expense {
-            background: #ef4444;
-            width: 80%;
-            border-radius: 4px 4px 0 0;
-            min-height: 2px;
-          }
-          .bar-net {
-            background: #3b82f6;
-            width: 60%;
-            border-radius: 4px 4px 0 0;
-            margin: 0 auto;
-            min-height: 2px;
-          }
-          .chart-label {
-            font-size: 10px;
-            margin-top: 5px;
-            color: #6b7280;
-            text-align: center;
-          }
           .chart-legend {
             display: flex;
             justify-content: center;
@@ -350,14 +307,18 @@ class ReportService {
   }
 
   private generateLast30DaysChart(transactions: any[], period: any): string {
-    // Get last 30 days of transactions
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+    // Get last 30 days
+    const dates = [];
+    const current = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(current);
+      d.setDate(d.getDate() - i);
+      dates.push(d.toLocaleDateString());
+    }
+
     const recentTransactions = transactions
-      .filter(t => new Date(t.date) >= thirtyDaysAgo)
-      .slice(-30)
-      .reverse();
+      .filter(t => new Date(t.date) >= new Date(current.getTime() - 30 * 24 * 60 * 60 * 1000))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     if (recentTransactions.length === 0) {
       return `
@@ -368,25 +329,26 @@ class ReportService {
       `;
     }
 
-    // Group by date
+    // Group by date, initialize all dates
     const grouped: Record<string, { income: number; expense: number; net: number }> = {};
-    
+    dates.forEach(date => {
+      grouped[date] = { income: 0, expense: 0, net: 0 };
+    });
+
     recentTransactions.forEach(t => {
       const date = new Date(t.date).toLocaleDateString();
-      if (!grouped[date]) {
-        grouped[date] = { income: 0, expense: 0, net: 0 };
-      }
-
-      if (t.type === 'income') {
-        grouped[date].income += t.amount;
-        grouped[date].net += t.amount;
-      } else {
-        grouped[date].expense += t.amount;
-        grouped[date].net -= t.amount;
+      if (grouped[date]) {
+        if (t.type === 'income') {
+          grouped[date].income += t.amount;
+          grouped[date].net += t.amount;
+        } else {
+          grouped[date].expense += t.amount;
+          grouped[date].net -= t.amount;
+        }
       }
     });
 
-    const labels = Object.keys(grouped);
+    const labels = dates;
     const incomeData = labels.map(d => grouped[d].income);
     const expenseData = labels.map(d => grouped[d].expense);
     const netData = labels.map(d => grouped[d].net);
@@ -396,18 +358,61 @@ class ReportService {
     const totalExpense = expenseData.reduce((a, b) => a + b, 0);
     const netProfit = totalIncome - totalExpense;
 
-    // Calculate max value for scaling
-    const maxIncome = Math.max(...incomeData);
-    const maxExpense = Math.max(...expenseData);
-    const maxNet = Math.max(...netData.map(Math.abs));
-    const maxValue = Math.max(maxIncome, maxExpense, maxNet, 100);
+    // For chart scaling
+    const allValues = [...incomeData, ...expenseData, ...netData];
+    let maxY = Math.max(...allValues, 1);
+    let minY = Math.min(...allValues, 0);
+    const rangeY = maxY - minY;
 
-    // Smart label formatting - show fewer labels
-    const displayLabels = labels.map((label, index) => 
-      index % Math.max(1, Math.floor(labels.length / 5)) === 0 
-        ? new Date(label).getDate().toString() 
-        : ''
-    );
+    // Chart dimensions
+    const chartWidth = 700;
+    const chartHeight = 250;
+    const padding = { top: 20, right: 20, bottom: 30, left: 50 };
+    const drawWidth = chartWidth - padding.left - padding.right;
+    const drawHeight = chartHeight - padding.top - padding.bottom;
+
+    const getX = (index: number) => padding.left + (index / (labels.length - 1)) * drawWidth;
+    const getY = (value: number) => padding.top + ((maxY - value) / rangeY) * drawHeight;
+
+    // Points for lines
+    const incomePoints = labels.map((_, i) => `${getX(i)},${getY(incomeData[i])}`).join(' ');
+    const expensePoints = labels.map((_, i) => `${getX(i)},${getY(expenseData[i])}`).join(' ');
+    const netPoints = labels.map((_, i) => `${getX(i)},${getY(netData[i])}`).join(' ');
+
+    // SVG chart
+    const svgChart = `
+      <svg width="${chartWidth}" height="${chartHeight}" viewBox="0 0 ${chartWidth} ${chartHeight}">
+        <!-- Y axis -->
+        <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + drawHeight}" stroke="#e5e7eb" />
+        <!-- X axis -->
+        <line x1="${padding.left}" y1="${padding.top + drawHeight}" x2="${padding.left + drawWidth}" y2="${padding.top + drawHeight}" stroke="#e5e7eb" />
+        ${minY < 0 ? `<line x1="${padding.left}" y1="${getY(0)}" x2="${padding.left + drawWidth}" y2="${getY(0)}" stroke="#ccc" stroke-dasharray="5,5" />` : ''}
+        
+        <!-- Y ticks and labels -->
+        ${Array.from({ length: 6 }).map((_, i) => {
+          const val = minY + (i / 5) * rangeY;
+          const y = getY(val);
+          return `
+            <line x1="${padding.left - 5}" y1="${y}" x2="${padding.left}" y2="${y}" stroke="#e5e7eb" />
+            <text x="${padding.left - 10}" y="${y + 3}" text-anchor="end" font-size="10" fill="#6b7280">${formatCurrency(val).replace(/^\$/, '')}</text>
+          `;
+        }).join('')}
+        
+        <!-- X labels -->
+        ${labels.map((label, i) => {
+          if (i % Math.max(1, Math.floor(labels.length / 5)) !== 0) return '';
+          const x = getX(i);
+          return `
+            <text x="${x}" y="${padding.top + drawHeight + 15}" text-anchor="middle" font-size="10" fill="#6b7280">${new Date(label).getDate()}</text>
+          `;
+        }).join('')}
+        
+        <!-- Lines -->
+        <polyline points="${incomePoints}" fill="none" stroke="#10b981" stroke-width="2" />
+        <polyline points="${expensePoints}" fill="none" stroke="#ef4444" stroke-width="2" />
+        <polyline points="${netPoints}" fill="none" stroke="#3b82f6" stroke-width="2" />
+      </svg>
+    `;
 
     return `
       <div class="chart-container">
@@ -432,22 +437,7 @@ class ReportService {
         </div>
 
         <!-- Chart -->
-        <div class="chart">
-          ${labels.map((label, index) => {
-            const incomeHeight = (incomeData[index] / maxValue) * 100;
-            const expenseHeight = (expenseData[index] / maxValue) * 100;
-            const netHeight = (Math.abs(netData[index]) / maxValue) * 100;
-            
-            return `
-              <div class="chart-bar">
-                <div class="bar-income" style="height: ${incomeHeight}%"></div>
-                <div class="bar-expense" style="height: ${expenseHeight}%"></div>
-                <div class="bar-net" style="height: ${netHeight}%; background: ${netData[index] >= 0 ? '#10b981' : '#ef4444'};"></div>
-                <div class="chart-label">${displayLabels[index]}</div>
-              </div>
-            `;
-          }).join('')}
-        </div>
+        ${svgChart}
 
         <!-- Legend -->
         <div class="chart-legend">
