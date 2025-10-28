@@ -30,11 +30,11 @@ class ReportService {
   private async createPDF(html: string, fileName: string): Promise<string> {
     try {
       const { uri } = await Print.printToFileAsync({ html });
-      
+    
       // Rename file to include proper name
       const newUri = uri.replace(/Print\.pdf$/, fileName);
       // Note: In React Native, you might need to use FileSystem to properly rename
-      
+    
       return newUri;
     } catch (error) {
       console.error('Error creating PDF:', error);
@@ -57,10 +57,10 @@ class ReportService {
 
   private generateMonthlyHTML(reportData: ReportData): string {
     const { period, summary, analytics, chartData, transactions } = reportData;
-    
+  
     // Generate chart for last 30 days
     const chartHTML = this.generateLast30DaysChart(transactions, period);
-    
+  
     return `
       <!DOCTYPE html>
       <html>
@@ -68,82 +68,82 @@ class ReportService {
         <meta charset="utf-8">
         <title>Finance Report - ${period.monthName} ${period.year}</title>
         <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            margin: 40px; 
+          body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
             color: #333;
             line-height: 1.6;
           }
-          .header { 
-            text-align: center; 
+          .header {
+            text-align: center;
             border-bottom: 3px solid #4f46e5;
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
-          .summary-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 20px; 
+          .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
             margin-bottom: 30px;
           }
-          .summary-card { 
-            background: #f8fafc; 
-            padding: 20px; 
-            border-radius: 10px; 
+          .summary-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
             border-left: 4px solid #4f46e5;
           }
-          .amount { 
-            font-size: 24px; 
-            font-weight: bold; 
+          .amount {
+            font-size: 24px;
+            font-weight: bold;
             margin: 10px 0;
           }
           .income { color: #10b981; }
           .expense { color: #ef4444; }
           .net { color: #3b82f6; }
-          .section { 
-            margin-bottom: 30px; 
+          .section {
+            margin-bottom: 30px;
             padding: 20px;
             background: white;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           }
-          .section-title { 
-            color: #1f2937; 
+          .section-title {
+            color: #1f2937;
             border-bottom: 2px solid #e5e7eb;
             padding-bottom: 10px;
             margin-bottom: 20px;
           }
-          .analytics-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
+          .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
           }
-          .category-item { 
-            display: flex; 
-            justify-content: space-between; 
+          .category-item {
+            display: flex;
+            justify-content: space-between;
             padding: 8px 0;
             border-bottom: 1px solid #e5e7eb;
           }
-          .transaction-row { 
-            display: flex; 
-            justify-content: space-between; 
+          .transaction-row {
+            display: flex;
+            justify-content: space-between;
             padding: 12px 0;
             border-bottom: 1px solid #e5e7eb;
           }
           .transaction-date { color: #6b7280; font-size: 14px; }
           .transaction-amount.income { color: #10b981; }
           .transaction-amount.expense { color: #ef4444; }
-          .goal-status { 
-            background: #dbeafe; 
-            padding: 15px; 
-            border-radius: 8px; 
+          .goal-status {
+            background: #dbeafe;
+            padding: 15px;
+            border-radius: 8px;
             margin: 15px 0;
           }
           .chart-container {
             background: #f8fafc;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             margin: 20px 0;
             border: 1px solid #e5e7eb;
           }
@@ -207,7 +207,6 @@ class ReportService {
           <h2>${period.monthName} ${period.year}</h2>
           <p>Generated on ${new Date().toLocaleDateString()}</p>
         </div>
-
         <div class="summary-grid">
           <div class="summary-card">
             <h3>Total Income</h3>
@@ -225,7 +224,6 @@ class ReportService {
             <p>${analytics.counts.total} total transactions</p>
           </div>
         </div>
-
         ${summary.goalStatus ? `
         <div class="section">
           <h3 class="section-title">Goal Progress</h3>
@@ -237,7 +235,6 @@ class ReportService {
           </div>
         </div>
         ` : ''}
-
         <div class="section">
           <h3 class="section-title">Financial Analytics</h3>
           <div class="analytics-grid">
@@ -252,7 +249,6 @@ class ReportService {
             </div>
           </div>
         </div>
-
         <div class="section">
           <h3 class="section-title">Top Categories</h3>
           <div class="analytics-grid">
@@ -276,12 +272,10 @@ class ReportService {
             </div>
           </div>
         </div>
-
         <div class="section">
           <h3 class="section-title">Last 30 Days Financial Trends</h3>
           ${chartHTML}
         </div>
-
         <div class="section">
           <h3 class="section-title">Recent Transactions</h3>
           ${transactions.slice(0, 20).map(transaction => `
@@ -297,7 +291,6 @@ class ReportService {
           `).join('')}
           ${transactions.length > 20 ? `<p style="text-align: center; margin-top: 15px; color: #6b7280;">... and ${transactions.length - 20} more transactions</p>` : ''}
         </div>
-
         <div class="footer">
           <p>Report ID: ${reportData.generatedAt}</p>
         </div>
@@ -366,58 +359,149 @@ class ReportService {
 
     // Chart dimensions
     const chartWidth = 700;
-    const chartHeight = 250;
-    const padding = { top: 20, right: 20, bottom: 30, left: 50 };
+    const chartHeight = 300;
+    const padding = { top: 30, right: 30, bottom: 50, left: 60 };
     const drawWidth = chartWidth - padding.left - padding.right;
     const drawHeight = chartHeight - padding.top - padding.bottom;
 
     const getX = (index: number) => padding.left + (index / (labels.length - 1)) * drawWidth;
     const getY = (value: number) => padding.top + ((maxY - value) / rangeY) * drawHeight;
 
-    // Points for lines
-    const incomePoints = labels.map((_, i) => `${getX(i)},${getY(incomeData[i])}`).join(' ');
-    const expensePoints = labels.map((_, i) => `${getX(i)},${getY(expenseData[i])}`).join(' ');
-    const netPoints = labels.map((_, i) => `${getX(i)},${getY(netData[i])}`).join(' ');
+    // Generate SVG paths with smooth curves
+    const generateSmoothPath = (data: number[], color: string, fill: boolean = false): string => {
+      if (data.length === 0) return '';
+      
+      const points = data.map((value, index) => ({
+        x: getX(index),
+        y: getY(value)
+      }));
 
-    // SVG chart
+      let path = `M ${points[0].x},${points[0].y}`;
+      
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const curr = points[i];
+        const controlX = (prev.x + curr.x) / 2;
+        path += ` C ${controlX},${prev.y} ${controlX},${curr.y} ${curr.x},${curr.y}`;
+      }
+
+      if (fill) {
+        path += ` L ${points[points.length - 1].x},${padding.top + drawHeight}`;
+        path += ` L ${points[0].x},${padding.top + drawHeight}`;
+        path += ' Z';
+      }
+
+      return path;
+    };
+
+    // Generate gradient definitions
+    const gradients = `
+      <defs>
+        <linearGradient id="incomeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#10b981" stop-opacity="0.3" />
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0.1" />
+        </linearGradient>
+        <linearGradient id="expenseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#ef4444" stop-opacity="0.3" />
+          <stop offset="100%" stop-color="#ef4444" stop-opacity="0.1" />
+        </linearGradient>
+        <linearGradient id="netGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3" />
+          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.1" />
+        </linearGradient>
+      </defs>
+    `;
+
+    // Generate data points for circles
+    const generateDataPoints = (data: number[], color: string): string => {
+      return data.map((value, index) => {
+        if (value > 0) {
+          return `<circle cx="${getX(index)}" cy="${getY(value)}" r="3" fill="${color}" stroke="white" stroke-width="1.5" />`;
+        }
+        return '';
+      }).join('');
+    };
+
+    // SVG chart with beautiful design
     const svgChart = `
       <svg width="${chartWidth}" height="${chartHeight}" viewBox="0 0 ${chartWidth} ${chartHeight}">
-        <!-- Y axis -->
-        <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + drawHeight}" stroke="#e5e7eb" />
-        <!-- X axis -->
-        <line x1="${padding.left}" y1="${padding.top + drawHeight}" x2="${padding.left + drawWidth}" y2="${padding.top + drawHeight}" stroke="#e5e7eb" />
-        ${minY < 0 ? `<line x1="${padding.left}" y1="${getY(0)}" x2="${padding.left + drawWidth}" y2="${getY(0)}" stroke="#ccc" stroke-dasharray="5,5" />` : ''}
+        ${gradients}
         
-        <!-- Y ticks and labels -->
+        <!-- Background Grid -->
+        <g opacity="0.3">
+          ${Array.from({ length: 6 }).map((_, i) => {
+            const y = padding.top + (i / 5) * drawHeight;
+            return `<line x1="${padding.left}" y1="${y}" x2="${padding.left + drawWidth}" y2="${y}" stroke="#e5e7eb" stroke-width="1" />`;
+          }).join('')}
+          ${Array.from({ length: 8 }).map((_, i) => {
+            const x = padding.left + (i / 7) * drawWidth;
+            return `<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${padding.top + drawHeight}" stroke="#e5e7eb" stroke-width="1" />`;
+          }).join('')}
+        </g>
+
+        <!-- Zero Line -->
+        ${minY < 0 ? `<line x1="${padding.left}" y1="${getY(0)}" x2="${padding.left + drawWidth}" y2="${getY(0)}" stroke="#6b7280" stroke-width="1" stroke-dasharray="4,4" />` : ''}
+
+        <!-- Filled Areas -->
+        <path d="${generateSmoothPath(incomeData, '#10b981', true)}" fill="url(#incomeGradient)" />
+        <path d="${generateSmoothPath(expenseData, '#ef4444', true)}" fill="url(#expenseGradient)" />
+        <path d="${generateSmoothPath(netData, '#3b82f6', true)}" fill="url(#netGradient)" />
+
+        <!-- Lines -->
+        <path d="${generateSmoothPath(incomeData, '#10b981')}" fill="none" stroke="#10b981" stroke-width="3" />
+        <path d="${generateSmoothPath(expenseData, '#ef4444')}" fill="none" stroke="#ef4444" stroke-width="3" />
+        <path d="${generateSmoothPath(netData, '#3b82f6')}" fill="none" stroke="#3b82f6" stroke-width="3" />
+
+        <!-- Data Points -->
+        ${generateDataPoints(incomeData, '#10b981')}
+        ${generateDataPoints(expenseData, '#ef4444')}
+        ${generateDataPoints(netData, '#3b82f6')}
+
+        <!-- Y Axis -->
+        <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + drawHeight}" stroke="#374151" stroke-width="2" />
+        
+        <!-- X Axis -->
+        <line x1="${padding.left}" y1="${padding.top + drawHeight}" x2="${padding.left + drawWidth}" y2="${padding.top + drawHeight}" stroke="#374151" stroke-width="2" />
+
+        <!-- Y Labels -->
         ${Array.from({ length: 6 }).map((_, i) => {
           const val = minY + (i / 5) * rangeY;
           const y = getY(val);
           return `
-            <line x1="${padding.left - 5}" y1="${y}" x2="${padding.left}" y2="${y}" stroke="#e5e7eb" />
-            <text x="${padding.left - 10}" y="${y + 3}" text-anchor="end" font-size="10" fill="#6b7280">${formatCurrency(val).replace(/^\$/, '')}</text>
+            <text x="${padding.left - 10}" y="${y + 3}" text-anchor="end" font-size="11" fill="#6b7280" font-weight="500">
+              ${formatCurrency(val).replace(/^\$/, '')}
+            </text>
           `;
         }).join('')}
-        
-        <!-- X labels -->
+
+        <!-- X Labels -->
         ${labels.map((label, i) => {
-          if (i % Math.max(1, Math.floor(labels.length / 5)) !== 0) return '';
+          if (i % Math.max(1, Math.floor(labels.length / 8)) !== 0) return '';
           const x = getX(i);
+          const date = new Date(label);
           return `
-            <text x="${x}" y="${padding.top + drawHeight + 15}" text-anchor="middle" font-size="10" fill="#6b7280">${new Date(label).getDate()}</text>
+            <g transform="translate(${x}, ${padding.top + drawHeight + 20})">
+              <text text-anchor="middle" font-size="10" fill="#6b7280" font-weight="500">
+                ${date.getDate()}/${date.getMonth() + 1}
+              </text>
+            </g>
           `;
         }).join('')}
-        
-        <!-- Lines -->
-        <polyline points="${incomePoints}" fill="none" stroke="#10b981" stroke-width="2" />
-        <polyline points="${expensePoints}" fill="none" stroke="#ef4444" stroke-width="2" />
-        <polyline points="${netPoints}" fill="none" stroke="#3b82f6" stroke-width="2" />
+
+        <!-- Axis Labels -->
+        <text x="${padding.left - 40}" y="${padding.top + drawHeight / 2}" text-anchor="middle" transform="rotate(-90 ${padding.left - 40} ${padding.top + drawHeight / 2})" font-size="12" fill="#6b7280" font-weight="500">
+          Amount (${formatCurrency(0).replace(/[\d.,]/g, '')})
+        </text>
+        <text x="${padding.left + drawWidth / 2}" y="${chartHeight - 10}" text-anchor="middle" font-size="12" fill="#6b7280" font-weight="500">
+          Date
+        </text>
       </svg>
     `;
 
     return `
       <div class="chart-container">
         <div class="chart-title">Financial Overview - Last 30 Days</div>
-        
+      
         <!-- Summary Stats -->
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center;">
           <div>
@@ -435,10 +519,12 @@ class ReportService {
             <div style="color: #6b7280; font-size: 12px;">${netProfit >= 0 ? 'Profit' : 'Loss'}</div>
           </div>
         </div>
-
+        
         <!-- Chart -->
-        ${svgChart}
-
+        <div style="display: flex; justify-content: center; margin: 20px 0;">
+          ${svgChart}
+        </div>
+        
         <!-- Legend -->
         <div class="chart-legend">
           <div class="legend-item">
@@ -454,11 +540,11 @@ class ReportService {
             <span>Net</span>
           </div>
         </div>
-
+        
         <!-- Trend Indicator -->
         <div style="text-align: center; margin-top: 15px;">
           <div class="trend-indicator">
-            ${netProfit >= 0 ? '📈' : '📉'} 
+            ${netProfit >= 0 ? '📈' : '📉'}
             ${netProfit >= 0 ? 'Positive Trend' : 'Needs Attention'}
           </div>
         </div>
@@ -468,7 +554,7 @@ class ReportService {
 
   private generateYearlyHTML(reportData: YearlyReportData): string {
     const { period, summary, monthlyBreakdown, goalsProgress } = reportData;
-    
+  
     return `
       <!DOCTYPE html>
       <html>
@@ -476,49 +562,49 @@ class ReportService {
         <meta charset="utf-8">
         <title>Yearly Finance Report - ${period.year}</title>
         <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            margin: 40px; 
+          body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
             color: #333;
             line-height: 1.6;
           }
-          .header { 
-            text-align: center; 
+          .header {
+            text-align: center;
             border-bottom: 3px solid #4f46e5;
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
-          .summary-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 20px; 
+          .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
             margin-bottom: 30px;
           }
-          .summary-card { 
-            background: #f8fafc; 
-            padding: 20px; 
-            border-radius: 10px; 
+          .summary-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
             border-left: 4px solid #4f46e5;
           }
-          .amount { 
-            font-size: 20px; 
-            font-weight: bold; 
+          .amount {
+            font-size: 20px;
+            font-weight: bold;
             margin: 10px 0;
           }
           .income { color: #10b981; }
           .expense { color: #ef4444; }
           .net { color: #3b82f6; }
           .savings { color: #8b5cf6; }
-          .section { 
-            margin-bottom: 30px; 
+          .section {
+            margin-bottom: 30px;
             padding: 20px;
             background: white;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           }
-          .section-title { 
-            color: #1f2937; 
+          .section-title {
+            color: #1f2937;
             border-bottom: 2px solid #e5e7eb;
             padding-bottom: 10px;
             margin-bottom: 20px;
@@ -558,7 +644,6 @@ class ReportService {
           <h2>${period.year}</h2>
           <p>Generated on ${new Date().toLocaleDateString()}</p>
         </div>
-
         <div class="summary-grid">
           <div class="summary-card">
             <h3>Total Income</h3>
@@ -577,7 +662,6 @@ class ReportService {
             <div class="amount savings">${summary.savingsRate.toFixed(1)}%</div>
           </div>
         </div>
-
         <div class="section">
           <h3 class="section-title">Monthly Breakdown</h3>
           <div class="monthly-grid">
@@ -592,7 +676,6 @@ class ReportService {
             `).join('')}
           </div>
         </div>
-
         ${goalsProgress.length > 0 ? `
         <div class="section">
           <h3 class="section-title">Goals Progress</h3>
@@ -618,19 +701,17 @@ class ReportService {
           }).join('')}
         </div>
         ` : ''}
-
         <div class="section">
           <h3 class="section-title">Yearly Insights</h3>
           <p><strong>Total Transactions:</strong> ${summary.transactionCount}</p>
           <p><strong>Average Monthly Income:</strong> ${formatCurrency(summary.income / 12)}</p>
           <p><strong>Average Monthly Expenses:</strong> ${formatCurrency(summary.expenses / 12)}</p>
           <p><strong>Best Month:</strong> ${
-            Object.values(monthlyBreakdown).reduce((best, current) => 
+            Object.values(monthlyBreakdown).reduce((best, current) =>
               current.net > best.net ? current : best
             ).monthName
           }</p>
         </div>
-
         <div class="footer">
           <p>Report ID: ${reportData.generatedAt}</p>
         </div>
