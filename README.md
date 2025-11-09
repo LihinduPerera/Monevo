@@ -44,7 +44,7 @@ npx expo start
 
 ### Backend
 ```bash
-cd backend
+cd expressJs-backend
 npm i
 npm start
 ```
